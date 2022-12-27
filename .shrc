@@ -115,15 +115,46 @@ cni()
 
 
 ################################################################
-# # find file by name
+# # find file by name precisely
 ff()
 {   
-    command find $1 -name $2
+    if [ $# = 0 ]; then
+    elif [ $# = 1 ]; then
+        command find . -name $1 2> /dev/null
+    else
+        command find $1 -name $2 2> /dev/null
+    fi
 }
-# # find file content
-ffc()
+# # find file by name roughly
+ffa()
 {   
-    command grep -rnw $1 -e $2 --color=auto
+    if [ $# = 0 ]; then
+    elif [ $# = 1 ]; then
+        command find . -iname \*$1\* 2> /dev/null
+    else
+        command find $1 -iname \*$2\* 2> /dev/null
+    fi
+}
+# # find file content of word
+fx()
+{  
+    if [ $# = 0 ]; then
+    elif [ $# = 1 ]; then
+        command grep -rnw . -e $1 --color=auto
+    else
+        command grep -rnw $1 -e $2 --color=auto ${@:3}
+    fi
+    
+}
+# # find file content of all
+fxa() 
+{
+    if [ $# = 0 ]; then
+    elif [ $# = 1 ]; then
+        command grep -rni . -e $1 --color=auto
+    else
+        command grep -rni $1 -e $2 --color=auto ${@:3}
+    fi
 }
 
 
@@ -153,3 +184,12 @@ src()
         . ~/.bashrc
     fi
 }
+
+# # update .shrc
+urc()
+{
+    # command wget -O .shrc
+    command wget https://gitee.com/kurayuri/shrc/raw/main/.shrc -O .shrc
+    src
+}
+################################################################
