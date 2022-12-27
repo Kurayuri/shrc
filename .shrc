@@ -1,0 +1,155 @@
+# # venv
+alias av='source ./bin/activate'
+alias dv='deactivate'
+
+
+################################################################
+# # Shortcut
+alias cls='clear'
+
+alias h="history"
+
+alias py='python'
+
+alias wa='watch -n 0.1'
+
+################################################################
+# # Proxy
+# export host_ip=$(cat /etc/resolv.conf |grep "nameserver"|head -1 |cut -f 2 -d " ")
+export host_ip="localhost"
+alias proxy="export all_proxy=http://$host_ip:10808 http_proxy=http://$host_ip:10808 https_proxy=http://$host_ip:10808 socks_proxy=http://$host_ip:10808"
+alias unproxy='unset all_proxy http_proxy https_proxy'
+# proxy
+
+
+################################################################
+# # ssh-agent
+ssa()
+{
+    eval "$(ssh-agent -s)"
+    cd ~/.ssh
+    ssh-add *id*
+    cd ~
+}
+# ssa
+
+
+################################################################
+# # tmux
+tx()
+{
+    if [ "$1" = a ]; then
+	    command tmux attach
+    elif [ "$1" = at ]; then
+    	command tmux attach -t "${@:2}"
+    elif [ "$1" = k ]; then 
+	    command tmux kill-session -t "${@:2}"
+    elif [ "$1" = ka ]; then 
+	    command tmux kill-session -a "${@:2}"
+    elif [ "$1" = l ]; then 
+	    command tmux ls "${@:2}"
+    elif [ "$1" = n ]; then 
+	    command tmux new -s "${@:2}"
+    else
+    	command tmux "$@"
+    fi
+}
+
+
+################################################################\
+# # docker
+dk()
+{
+    if [ "$1" = c ]; then
+	    command docker create "${@:2}"
+    elif [ "$1" = cn ]; then
+	    command docker create --name "${@:2}"
+    elif [ "$1" = cnx ]; then
+	    command docker create --name "${@:2}" tail -f /dev/null
+    elif [ "$1" = e ]; then
+	    command docker exec "${@:2}"
+    elif [ "$1" = et ]; then
+	    command docker exec -it "${@:2}"
+    elif [ "$1" = eb ]; then
+	    command docker exec -it "${@:2}" bash
+    elif [ "$1" = l ]; then 
+	    command docker image list "${@:2}"
+    elif [ "$1" = p ]; then 
+	    command docker ps "${@:2}"
+    elif [ "$1" = pa ]; then 
+	    command docker ps -a "${@:2}"
+    elif [ "$1" = sa ]; then
+	    command docker start "${@:2}"
+    elif [ "$1" = sat ]; then
+	    command docker start "$2" && docker exec -it "${@:2}" 
+    elif [ "$1" = sab ]; then
+	    command docker start "${@:2}" && docker exec -it "${@:2}" bash
+    elif [ "$1" = sp ]; then
+	    command docker stop "${@:2}"
+    else
+    	command docker "$@"
+    fi
+}
+
+
+################################################################
+# # anaconda
+alias cn='conda'
+alias cav='conda activate'
+alias cdv='conda deactivate'
+cni()
+{
+    __conda_setup="$('/etc/anaconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+        eval "$__conda_setup"
+    else
+        if [ -f "/etc/anaconda3/etc/profile.d/conda.sh" ]; then
+            . "/etc/anaconda3/etc/profile.d/conda.sh"
+        else
+            export PATH="/etc/anaconda3/bin:$PATH"
+        fi
+    fi
+    unset __conda_setup
+    cdv
+}
+
+
+################################################################
+# # find file by name
+ff()
+{   
+    command find $1 -name $2
+}
+# # find file content
+ffc()
+{   
+    command grep -rnw $1 -e $2 --color=auto
+}
+
+
+################################################################
+# # function
+contains() {
+    string="$1"
+    substring="$2"
+    if test "${string#*$substring}" != "$string"
+    then
+        return 0 
+    else
+        return 1
+    fi
+}
+
+
+################################################################
+# # source .shrc
+src()
+{
+    if contains $SHELL zsh; then
+        command echo zsh
+        . ~/.zshrc
+    elif contains $SHELL bash; then
+        command echo bash
+        . ~/.bashrc
+    fi
+}
