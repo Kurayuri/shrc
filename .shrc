@@ -1,8 +1,3 @@
-# # venv
-alias av='source ./bin/activate'
-alias dv='deactivate'
-
-
 ################################################################
 # # Shortcut
 alias cls='clear'
@@ -12,6 +7,18 @@ alias h="history"
 alias py='python'
 
 alias wa='watch -n 0.1'
+
+
+################################################################
+# # suffix alias
+alias -s deb="dpkg -i"
+alias -s tgz="tar -zxvf"
+
+################################################################
+# # venv
+alias av='source ./bin/activate'
+alias dv='deactivate'
+
 
 ################################################################
 # # Proxy
@@ -188,7 +195,6 @@ src()
 # # update .shrc
 urc()
 {
-    # command wget -O .shrc
     command wget https://gitee.com/kurayuri/shrc/raw/main/.shrc -O .shrc
     src
 }
