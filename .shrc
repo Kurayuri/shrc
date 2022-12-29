@@ -13,6 +13,7 @@ alias wa='watch -n 0.1'
 # # suffix alias
 alias -s deb="dpkg -i"
 alias -s tgz="tar -zxvf"
+alias -s tar.gz="tar -zxvf"
 
 ################################################################
 # # venv
