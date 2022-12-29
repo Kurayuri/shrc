@@ -197,12 +197,12 @@ src()
 # # update .shrc
 urc()
 {
-    command wget https://gitee.com/kurayuri/shrc/raw/main/.shrc -O .shrc_new
-    if [$? == 0]; then
-        command rm .shrc
-        command mv .shrc_enw .shrc
+    command wget https://gitee.com/kurayuri/shrc/raw/main/.shrc -O ~/.shrc_new
+    if [ $? = 0 ]; then
+        command rm ~/.shrc
+        command mv ~/.shrc_new ~/.shrc
     else
-        command rm .shrc_new
+        command rm ~/.shrc_new
     fi
     src
 }
