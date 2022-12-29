@@ -13,7 +13,7 @@ alias wa='watch -n 0.1'
 # # suffix alias
 alias -s deb="dpkg -i"
 alias -s tgz="tar -zxvf"
-alias -s tar.gz="tar -zxvf"
+alias -s gz="tar -zxvf"
 
 ################################################################
 # # venv
@@ -196,7 +196,13 @@ src()
 # # update .shrc
 urc()
 {
-    command wget https://gitee.com/kurayuri/shrc/raw/main/.shrc -O .shrc
+    command wget https://gitee.com/kurayuri/shrc/raw/main/.shrc -O .shrc_new
+    if [$? == 0]; then
+        command rm .shrc
+        command mv .shrc_enw .shrc
+    else
+        command rm .shrc_new
+    fi
     src
 }
 ################################################################
