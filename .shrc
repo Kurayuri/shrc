@@ -2,12 +2,20 @@
 # # Shortcut
 alias cls='clear'
 
+alias dud="du -d 1 -h"
+alias dus="du -sh"
+
 alias h="history"
 
 alias py='python'
 
 alias wa='watch -n 0.1'
 
+################################################################
+# # global alias
+alias -g H='| head'
+alias -g T='| tail'
+alias -g G='| grep'
 
 ################################################################
 # # suffix alias
