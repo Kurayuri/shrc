@@ -146,9 +146,9 @@ dk()
 
 ################################################################
 # # anaconda
-alias cn='conda'
 alias cav='conda activate'
 alias cdv='conda deactivate'
+
 cni()
 {
     __conda_setup="$('$CONDA_HOME/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
@@ -163,6 +163,23 @@ cni()
     fi
     unset __conda_setup
     cdv
+}
+
+cn()
+{
+    if [ "$1" = c ]; then
+        if [ $# = 2 ]; then
+	        command conda create -n "$2"
+        elif [ $# = 3 ]; then
+	        command conda create -n "$2" python="${@:3}"
+        fi  
+    elif [ "$1" = l ]; then
+	    command conda env list
+    elif [ "$1" = rm ]; then
+	    command conda env remove -n "${@:2}"
+    else
+    	command conda "$@"
+    fi
 }
 
 
