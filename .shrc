@@ -1,4 +1,18 @@
 ################################################################
+# # Command Naming Standard
+# n     : Create new            | sa    : Start
+## n    : with name             
+
+# rm    : Remove                | sp    : Stop
+##  a   : all
+
+# l     : List                  | p     : Process Status
+## a    : all
+
+# x     : Execute
+
+
+################################################################
 # # Shortcut
 alias cls='clear'
 
@@ -10,6 +24,7 @@ alias h="history"
 alias py='python'
 
 alias wa='watch -n 0.1'
+
 
 ################################################################
 # # global alias
@@ -94,14 +109,16 @@ tx()
 	    command tmux attach
     elif [ "$1" = at ]; then
     	command tmux attach -t "${@:2}"
-    elif [ "$1" = k ]; then 
-	    command tmux kill-session -t "${@:2}"
-    elif [ "$1" = ka ]; then 
-	    command tmux kill-session -a "${@:2}"
     elif [ "$1" = l ]; then 
 	    command tmux ls "${@:2}"
     elif [ "$1" = n ]; then 
+	    command tmux
+    elif [ "$1" = nn ]; then 
 	    command tmux new -s "${@:2}"
+    elif [ "$1" = rm ]; then 
+	    command tmux kill-session -t "${@:2}"
+    elif [ "$1" = rma ]; then 
+	    command tmux kill-session -a "${@:2}"
     else
     	command tmux "$@"
     fi
@@ -112,20 +129,15 @@ tx()
 # # docker
 dk()
 {
-    if [ "$1" = c ]; then
-	    command docker create "${@:2}"
-    elif [ "$1" = cn ]; then
-	    command docker create --name "${@:2}"
-    elif [ "$1" = cnx ]; then
-	    command docker create --name "${@:2}" tail -f /dev/null
-    elif [ "$1" = e ]; then
-	    command docker exec "${@:2}"
-    elif [ "$1" = et ]; then
-	    command docker exec -it "${@:2}"
-    elif [ "$1" = eb ]; then
-	    command docker exec -it "${@:2}" bash
-    elif [ "$1" = l ]; then 
+
+    if [ "$1" = l ]; then 
 	    command docker image list "${@:2}"
+    elif [ "$1" = n ]; then
+	    command docker create "${@:2}"
+    elif [ "$1" = nn ]; then
+	    command docker create --name "${@:2}"
+    elif [ "$1" = nnx ]; then
+	    command docker create --name "${@:2}" tail -f /dev/null
     elif [ "$1" = p ]; then 
 	    command docker ps "${@:2}"
     elif [ "$1" = pa ]; then 
@@ -138,6 +150,12 @@ dk()
 	    command docker start "${@:2}" && docker exec -it "${@:2}" bash
     elif [ "$1" = sp ]; then
 	    command docker stop "${@:2}"
+    elif [ "$1" = x ]; then
+	    command docker exec "${@:2}"
+    elif [ "$1" = xt ]; then
+	    command docker exec -it "${@:2}"
+    elif [ "$1" = xb ]; then
+	    command docker exec -it "${@:2}" bash
     else
     	command docker "$@"
     fi
@@ -146,9 +164,6 @@ dk()
 
 ################################################################
 # # anaconda
-alias cav='conda activate'
-alias cdv='conda deactivate'
-
 cni()
 {
     __conda_setup="$('$CONDA_HOME/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
@@ -162,25 +177,30 @@ cni()
         fi
     fi
     unset __conda_setup
-    cdv
 }
 
 cn()
-{
-    if [ "$1" = c ]; then
-        if [ $# = 2 ]; then
-	        command conda create -n "$2"
-        elif [ $# = 3 ]; then
-	        command conda create -n "$2" python="${@:3}"
-        fi  
+{   if [ "$1" = av ]; then
+	    conda activate "${@:2}"
+    elif [ "$1" = dv ]; then
+	    conda deactivate
     elif [ "$1" = l ]; then
 	    command conda env list
+    elif [ "$1" = n ]; then
+        command conda create "${@:2}"
+    elif [ "$1" = nn ]; then
+        command conda create -n "$2" "${@:3}" python
+    elif [ "$1" = nnp ]; then
+        command conda create -n "$2" "${@:4}" python="$3"
     elif [ "$1" = rm ]; then
 	    command conda env remove -n "${@:2}"
     else
     	command conda "$@"
     fi
 }
+
+alias cav='cn av'
+alias cdv='cn dv'
 
 
 ################################################################
@@ -204,7 +224,7 @@ ffa()
         command find $1 -iname \*$2\* 2> /dev/null
     fi
 }
-# # find file content of word
+# # find text of word
 fx()
 {  
     if [ $# = 0 ]; then
@@ -215,7 +235,7 @@ fx()
     fi
     
 }
-# # find file content of all
+# # find text of all
 fxa() 
 {
     if [ $# = 0 ]; then
