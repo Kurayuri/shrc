@@ -285,8 +285,13 @@ urc()
 {
     command wget https://gitee.com/kurayuri/shrc/raw/main/.shrc -O ~/.shrc_new
     if [ $? = 0 ]; then
-        command rm ~/.shrc
-        command mv ~/.shrc_new ~/.shrc
+        . ~/.shrc_new
+        if [ $? = 0 ]; then
+            command rm ~/.shrc
+            command mv ~/.shrc_new ~/.shrc
+        else
+            command rm ~/.shrc_new
+        fi
     else
         command rm ~/.shrc_new
     fi
