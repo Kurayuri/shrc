@@ -106,19 +106,24 @@ ssa()
 tx()
 {
     if [ "$1" = a ]; then
-	    command tmux attach
+        command tmux attach
     elif [ "$1" = at ]; then
-    	command tmux attach -t "${@:2}"
+        command tmux attach -t "${@:2}"
+    elif [ "$1" = cl  ]; then
+        command tmux clear-history
+    elif [ "$1" = cls ]; then
+        command clear
+        command tmux clear-history
     elif [ "$1" = l ]; then 
-	    command tmux ls "${@:2}"
+        command tmux ls "${@:2}"
     elif [ "$1" = n ]; then 
-	    command tmux
+        command tmux
     elif [ "$1" = nn ]; then 
-	    command tmux new -s "${@:2}"
+        command tmux new -s "${@:2}"
     elif [ "$1" = rm ]; then 
-	    command tmux kill-session -t "${@:2}"
+        command tmux kill-session -t "${@:2}"
     elif [ "$1" = rma ]; then 
-	    command tmux kill-session -a "${@:2}"
+        command tmux kill-session -a "${@:2}"
     elif [ "$1" = s ]; then 
         if [ $# = 1 ]; then
             command tmux capture-pane -pS - > "tmux.log"
@@ -126,7 +131,7 @@ tx()
             command tmux capture-pane -pS - > "$2"
         fi
     else
-    	command tmux "$@"
+        command tmux "$@"
     fi
 }
 
@@ -137,33 +142,33 @@ dk()
 {
 
     if [ "$1" = l ]; then 
-	    command docker image list "${@:2}"
+        command docker image list "${@:2}"
     elif [ "$1" = n ]; then
-	    command docker create "${@:2}"
+        command docker create "${@:2}"
     elif [ "$1" = nn ]; then
-	    command docker create --name "${@:2}"
+        command docker create --name "${@:2}"
     elif [ "$1" = nnx ]; then
-	    command docker create --name "${@:2}" tail -f /dev/null
+        command docker create --name "${@:2}" tail -f /dev/null
     elif [ "$1" = p ]; then 
-	    command docker ps "${@:2}"
+        command docker ps "${@:2}"
     elif [ "$1" = pa ]; then 
-	    command docker ps -a "${@:2}"
+        command docker ps -a "${@:2}"
     elif [ "$1" = sa ]; then
-	    command docker start "${@:2}"
+        command docker start "${@:2}"
     elif [ "$1" = sat ]; then
-	    command docker start "$2" && docker exec -it "${@:2}" 
+        command docker start "$2" && docker exec -it "${@:2}" 
     elif [ "$1" = sab ]; then
-	    command docker start "${@:2}" && docker exec -it "${@:2}" bash
+        command docker start "${@:2}" && docker exec -it "${@:2}" bash
     elif [ "$1" = sp ]; then
-	    command docker stop "${@:2}"
+        command docker stop "${@:2}"
     elif [ "$1" = x ]; then
-	    command docker exec "${@:2}"
+        command docker exec "${@:2}"
     elif [ "$1" = xt ]; then
-	    command docker exec -it "${@:2}"
+        command docker exec -it "${@:2}"
     elif [ "$1" = xb ]; then
-	    command docker exec -it "${@:2}" bash
+        command docker exec -it "${@:2}" bash
     else
-    	command docker "$@"
+        command docker "$@"
     fi
 }
 
@@ -187,11 +192,11 @@ cni()
 
 cn()
 {   if [ "$1" = av ]; then
-	    conda activate "${@:2}"
+        conda activate "${@:2}"
     elif [ "$1" = dv ]; then
-	    conda deactivate
+        conda deactivate
     elif [ "$1" = l ]; then
-	    command conda env list
+        command conda env list
     elif [ "$1" = n ]; then
         command conda create "${@:2}"
     elif [ "$1" = nn ]; then
@@ -199,9 +204,9 @@ cn()
     elif [ "$1" = nnp ]; then
         command conda create -n "$2" "${@:4}" python="$3"
     elif [ "$1" = rm ]; then
-	    command conda env remove -n "${@:2}"
+        command conda env remove -n "${@:2}"
     else
-    	command conda "$@"
+        command conda "$@"
     fi
 }
 
