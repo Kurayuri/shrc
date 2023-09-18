@@ -119,6 +119,12 @@ tx()
 	    command tmux kill-session -t "${@:2}"
     elif [ "$1" = rma ]; then 
 	    command tmux kill-session -a "${@:2}"
+    elif [ "$1" = s ]; then 
+        if [ $# = 1 ]; then
+            command tmux capture-pane -pS - > "tmux.log"
+        elif [ $# = 2 ]; then
+            command tmux capture-pane -pS - > "$2"
+        fi
     else
     	command tmux "$@"
     fi
