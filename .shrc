@@ -25,6 +25,7 @@ alias py='python'
 
 alias wa='watch -n 0.1'
 
+alias runner="ps aux | awk '{print $1}' | sort | uniq"
 
 ################################################################
 # # global alias
