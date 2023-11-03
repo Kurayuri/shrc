@@ -88,7 +88,9 @@ nsu()
     fi
 }
 
-
+alias tgit="ssh -vT git@github.com"
+alias tprx="curl www.google.com"
+alias tnet="ping -c 4 jd.com"
 
 ################################################################
 # # ssh-agent
@@ -136,7 +138,7 @@ tx()
     fi
 }
 
-TMUX_CONF='set -g history-limit 100000
+TMUX_CONF='set -g history-limit 1048576
 bind C-l send-keys C-l \; clear-history
 bind C-s capture-pane -S -  \; save-buffer tmux.log'
 echo $TMUX_CONF > $HOME/.tmux.conf
