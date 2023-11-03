@@ -155,8 +155,14 @@ dk()
         command docker create "${@:2}"
     elif [ "$1" = nn ]; then
         command docker create --name "${@:2}"
-    elif [ "$1" = nnx ]; then
+    elif [ "$1" = nnh ]; then
         command docker create --name "${@:2}" tail -f /dev/null
+    elif [ "$1" = r ]; then
+        command docker run "${@:2}"
+    elif [ "$1" = rn ]; then
+        command docker run --name "${@:2}"
+    elif [ "$1" = rnh ]; then
+        command docker run --name "${@:2}" tail -f /dev/null
     elif [ "$1" = p ]; then 
         command docker ps "${@:2}"
     elif [ "$1" = pa ]; then 
