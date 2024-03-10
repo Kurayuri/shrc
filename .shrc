@@ -38,6 +38,7 @@ alias -g G='| grep'
 # # suffix alias
 alias -s deb="dpkg -i"
 alias -s gz="tar -zxvf"
+alias -s tar="tar -xvf"
 alias -s tgz="tar -zxvf"
 alias -s zip="unzip"
 
@@ -89,7 +90,7 @@ nsu()
 }
 
 alias tgit="ssh -vT git@github.com"
-alias tprx="curl www.google.com"
+alias tpxy="curl www.google.com"
 alias tnet="ping -c 4 jd.com"
 
 ################################################################
