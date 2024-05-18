@@ -52,6 +52,7 @@ alias dv='deactivate'
 ################################################################
 # # Proxy
 # export host_ip=$(cat /etc/resolv.conf |grep "nameserver"|head -1 |cut -f 2 -d " ")
+
 proxy()
 {
     local ip="localhost"
@@ -305,14 +306,9 @@ ulimit -n 65536
 ################################################################
 # # source .shrc
 src()
-{
-    if contains $SHELL zsh; then
-        command echo zsh
-        . ~/.zshrc
-    elif contains $SHELL bash; then
-        command echo bash
-        . ~/.bashrc
-    fi
+{   
+    command echo $SHELL
+    . ~/."$(basename $SHELL)"rc
 }
 
 # # update .shrc
