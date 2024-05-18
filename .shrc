@@ -101,7 +101,7 @@ nsu()
 }
 
 alias tgit="ssh -vT git@github.com"
-alias tpxy="curl www.google.com"
+alias tprx="curl www.google.com"
 alias tnet="ping -c 4 jd.com"
 
 ################################################################
