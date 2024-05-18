@@ -52,8 +52,18 @@ alias dv='deactivate'
 ################################################################
 # # Proxy
 # export host_ip=$(cat /etc/resolv.conf |grep "nameserver"|head -1 |cut -f 2 -d " ")
-export host_ip="localhost"
-alias proxy="export all_proxy=http://$host_ip:7890 http_proxy=http://$host_ip:7890 https_proxy=http://$host_ip:7890 socks_proxy=http://$host_ip:7890"
+proxy()
+{
+    local ip="localhost"
+    local port=7890
+    if [ $# = 1 ]; then
+        ip=$1
+    elif [ $# = 2 ]; then
+        ip=$1
+        port=$2
+    fi
+    export all_proxy="http://${ip}:${port}" http_proxy="http://${ip}:${port}" https_proxy="http://${ip}:${port}" socks_proxy="http://${ip}:${port}"
+}
 alias unproxy='unset all_proxy http_proxy https_proxy socks_proxy'
 # proxy
 
