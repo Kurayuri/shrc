@@ -44,6 +44,12 @@ alias -s zip="unzip"
 
 
 ################################################################
+# # environment variables
+export APP_HOME="$HOME/Application"
+export PATH="$APP_HOME/bin:$PATH"
+
+
+################################################################
 # # venv
 alias av='source ./bin/activate'
 alias dv='deactivate'
@@ -201,6 +207,8 @@ dk()
 
 ################################################################
 # # anaconda
+export CONDA_HOME="$APP_HOME/anaconda3"
+
 cni()
 {
     __conda_setup="$('$CONDA_HOME/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
@@ -238,6 +246,8 @@ cn()
 
 alias cav='cn av'
 alias cdv='cn dv'
+
+cni
 
 
 ################################################################
@@ -300,7 +310,6 @@ contains() {
 ################################################################
 # # settings
 ulimit -n 65536
-
 
 
 ################################################################
