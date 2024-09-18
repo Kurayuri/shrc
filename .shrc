@@ -46,7 +46,8 @@ alias -s zip="unzip"
 ################################################################
 # # environment variables
 export APP_HOME="$HOME/Application"
-export PATH="$APP_HOME/bin:$PATH"
+export LOCAL_HOME="$HOME/.local"
+export PATH="$APP_HOME/bin:$LOCAL_HOME/bin:$PATH"
 
 
 ################################################################
