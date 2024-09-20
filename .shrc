@@ -1,4 +1,9 @@
 ################################################################
+# # Unix Shell Run Commands
+################################################################
+
+
+################################################################
 # # Command Naming Standard
 # n     : Create new            | sa    : Start
 ## n    : with name             
@@ -317,7 +322,7 @@ ulimit -n 65536
 # # source .shrc
 src()
 {   
-    command echo $SHELL
+    command echo "Current shell: $SHELL"
     . ~/."$(basename $SHELL)"rc
 }
 
