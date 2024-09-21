@@ -8,7 +8,7 @@ $ProfileHome = "C:\Windows\System32\WindowsPowerShell\v1.0"
 $ProfilePath = "C:\Windows\System32\WindowsPowerShell\v1.0\Profile.ps1"
 
 ################################################################
-# # Shortcut
+# # Alias
 Set-Alias which Get-Command
 Set-Alias gh Get-Help 
 
@@ -72,6 +72,40 @@ If (Test-Path "$Env:CONDA_HOME\Scripts\conda.exe") {
 }
 
 ################################################################
+# # Shortcut
+function ConvertFrom-Shortcut {
+  param (
+    [string]$Path = $null,
+    [string]$ItemType = "SymbolicLink"
+  )
+
+  if (Test-Path $Path -PathType Leaf) {
+    $Filter = "*"
+  }
+  else {
+    $Filter = "*.lnk"
+  }
+
+  Get-ChildItem -Filter $Filter -Path $Path | ForEach-Object {
+    $shell = New-Object -ComObject WScript.Shell
+    $shortcut = $shell.CreateShortcut($_.FullName)
+    $target = $shortcut.TargetPath
+      
+    if (Test-Path $target) {
+      New-Item -ItemType $ItemType -Path "$($_.BaseName)" -Target $target -Force
+      Write-Host "Created $ItemType for $($_.Name) -> $target"
+    }
+    else {
+      Write-Host "Target not found for $($_.Name)"
+    }
+  }
+  
+}
+
+
+
+
+################################################################
 # # source .shrc
 function Invoke-Profile {
   Write-Host "Current shell: $((Get-Process -Id $PID).Path)"
@@ -109,4 +143,6 @@ function Update-Profile {
 Set-Alias src Invoke-Profile
 Set-Alias urc Update-Profile
 ################################################################
+
+
 
