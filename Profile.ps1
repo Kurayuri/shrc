@@ -34,38 +34,42 @@ function Prompt {
 
 ################################################################
 # # Anaconda
+If (Test-Path "$Env:CONDA_HOME\Scripts\conda.exe") {
+  function Initialize-Conda { & "$ENV:CONDA_HOME\shell\condabin\conda-hook.ps1" }
+  function Invoke-CondaAbbr {
+    param (
+      [string]$command
+    )
+    $arg0 = $args[0]
+    $arg1 = $args[1]
+    $args_ = $args | Select-Object -Skip 2
 
-function Initialize-Conda { & "$ENV:CONDA_HOME\shell\condabin\conda-hook.ps1" }
+    if (-not $command) {
+      conda
+    }
 
-function Invoke-Conda {
-  param (
-    [string]$command
-  )
-  $arg0 = $args[0]
-  $arg1 = $args[1]
-  $args_ = $args | Select-Object -Skip 2
-
-  switch ($command) {
-    "av" { conda activate @args }
-    "dv" { conda deactivate @args }
-    "l" { conda env list @args }
-    "n" { conda create @args }
-    "nn" { conda create -n @args python }
-    "nnp" { conda create -n $arg0 @args_ python=$arg1 }
-    "rm" { conda env remove -n @args }
-    default { conda $args }
+    switch ($command) {
+      "av" { conda activate @args }
+      "dv" { conda deactivate @args }
+      "l" { conda env list @args }
+      "n" { conda create @args }
+      "nn" { conda create -n @args python }
+      "nnp" { conda create -n $arg0 @args_ python=$arg1 }
+      "rm" { conda env remove -n @args }
+      default { conda $args }
+    }
   }
+
+  function Enter-Conda { conda activate @args }
+  function Exit-Conda { conda deactivate @args }
+
+  Set-Alias cn Invoke-CondaAbbr
+  Set-Alias cni Initialize-Conda
+  Set-Alias cav Enter-Conda
+  Set-Alias cdv Exit-Conda
+
+  Initialize-Conda
 }
-
-function Enter-Conda { conda activate @args }
-function Exit-Conda { conda deactivate @args }
-
-Set-Alias cn Invoke-Conda
-Set-Alias cni Initialize-Conda
-Set-Alias cav Enter-Conda
-Set-Alias cdv Exit-Conda
-
-Initialize-Conda
 
 ################################################################
 # # source .shrc
@@ -77,7 +81,7 @@ function Invoke-Profile {
 
 # # update .shrc
 function Update-Profile {
-  $newProfilePath = "$ProfileHome\Profile.new"
+  $newProfilePath = "$ProfileHome\Profile_.ps1"
   $url = "https://gitee.com/kurayuri/shrc/raw/main/Profile.ps1"
 
   try {
@@ -87,19 +91,18 @@ function Update-Profile {
       . $newProfilePath
       Remove-Item $ProfilePath
       Rename-Item -Path $newProfilePath -NewName $ProfilePath
-      Write-Host "Updated .shrc successfully."
+      Write-Host "Updated Profile.ps1 successfully."
     }
     catch {
-      Write-Host "Error loading new configuration file."
+      Write-Host "Error loading new Profile.ps1."
       Remove-Item $newProfilePath
     }
   }
   catch {
-    Write-Host "Failed to download new configuration file."
+    Write-Host "Failed to download new Profile.ps1."
     Remove-Item $newProfilePath -ErrorAction SilentlyContinue
   }
 
-  # 调用 src 函数以重新加载配置
   Invoke-Profile
 }
 
