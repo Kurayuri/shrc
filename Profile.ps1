@@ -3,9 +3,13 @@
 ################################################################
 
 ################################################################
-# # Location
+# # Env
 $ProfileHome = "C:\Windows\System32\WindowsPowerShell\v1.0"
 $ProfilePath = "C:\Windows\System32\WindowsPowerShell\v1.0\Profile.ps1"
+
+################################################################
+# # Settings
+Set-PSReadlineKeyHandler -Key Tab -Function MenuComplete
 
 ################################################################
 # # Alias
