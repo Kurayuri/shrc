@@ -23,6 +23,9 @@ Set-Alias ll  Get-ChildItem
 
 Set-Alias G Select-String 
 
+Set-Alias py python
+
+
 ################################################################
 # # Prompt
 function Prompt {
