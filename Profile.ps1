@@ -22,6 +22,8 @@ Set-Alias la  Get-AllChildItem
 Set-Alias ll  Get-ChildItem
 
 Set-Alias G Select-String 
+Set-Alias S Select-Object
+
 
 Set-Alias py python
 
