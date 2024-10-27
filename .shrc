@@ -27,6 +27,7 @@ alias du1="du -d 1 -h | sort -h"
 alias h="history"
 
 alias py='python'
+alias ipy='ipython'
 
 alias wa='watch -n 0.1'
 

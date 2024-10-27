@@ -26,6 +26,7 @@ Set-Alias S Select-Object
 
 
 Set-Alias py python
+Set-Alias ipy ipython
 
 
 ################################################################
