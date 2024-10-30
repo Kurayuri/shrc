@@ -55,6 +55,9 @@ export APP_HOME="$HOME/Application"
 export LOCAL_HOME="$HOME/.local"
 export PATH="$APP_HOME/bin:$LOCAL_HOME/bin:$PATH"
 
+################################################################
+# # mirrors
+export HF_ENDPOINT='https://hf-mirror.com'
 
 ################################################################
 # # venv
