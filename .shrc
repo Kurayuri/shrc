@@ -26,9 +26,6 @@ alias du1="du -d 1 -h | sort -h"
 
 alias h="history"
 
-alias py='python'
-alias ipy='ipython'
-
 alias wa='watch -n 0.1'
 
 alias runner="ps aux | awk '{print \$1}' | sort | uniq"
@@ -216,6 +213,29 @@ dk()
 
 
 ################################################################
+# # python
+pi()
+{
+    if [ "$1" = a ]; then
+        command tmux attach
+    elif [ "$1" = i ]; then 
+        command pip install "${@:2}"
+    elif [ "$1" = n ]; then 
+        command pip install "${@:2}"
+    elif [ "$1" = rm ]; then 
+        command pip uninstall "${@:2}"
+    elif [ "$1" = l ]; then 
+        command pip list "${@:2}"
+    else
+        command pip "$@"
+    fi
+}
+
+alias py='python'
+alias ipy='ipython'
+
+
+################################################################
 # # anaconda
 export CONDA_HOME="$APP_HOME/anaconda3"
 
@@ -258,6 +278,7 @@ alias cav='cn av'
 alias cdv='cn dv'
 
 cni
+
 
 
 ################################################################
