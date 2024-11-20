@@ -27,6 +27,7 @@ alias du1="du -d 1 -h | sort -h"
 alias h="history"
 
 alias wa='watch -n 0.1'
+alias wanv="wa nvidia-smi"
 
 alias runner="ps aux | awk '{print \$1}' | sort | uniq"
 
@@ -237,7 +238,9 @@ alias ipy='ipython'
 
 ################################################################
 # # anaconda
-export CONDA_HOME="$APP_HOME/anaconda3"
+if [ -z "${CONDA_HOME}" ]; then
+    export CONDA_HOME="$APP_HOME/anaconda3"
+fi
 
 cni()
 {
