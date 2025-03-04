@@ -53,7 +53,8 @@ alias -s zip="unzip"
 # # environment variables
 export APP_HOME="$HOME/Application"
 export LOCAL_HOME="$HOME/.local"
-export PATH="$APP_HOME/bin:$LOCAL_HOME/bin:$PATH"
+export BUN_HOME="$HOME/.bun"
+export PATH="$APP_HOME/bin:$LOCAL_HOME/bin:$BUN_HOME/bin:$PATH"
 
 ################################################################
 # # mirrors
@@ -73,13 +74,18 @@ proxy()
 {
     local ip="localhost"
     local port=7890
+    local protocal="http"
     if [ $# = 1 ]; then
         ip=$1
     elif [ $# = 2 ]; then
         ip=$1
         port=$2
+    elif [ $# = 3 ]; then
+        ip=$1
+        port=$2
+        protocal=$3
     fi
-    export all_proxy="http://${ip}:${port}" http_proxy="http://${ip}:${port}" https_proxy="http://${ip}:${port}" socks_proxy="http://${ip}:${port}"
+    export all_proxy="${protocal}://${ip}:${port}" http_proxy="${protocal}://${ip}:${port}" https_proxy="${protocal}://${ip}:${port}" socks_proxy="${protocal}://${ip}:${port}"
 }
 alias unproxy='unset all_proxy http_proxy https_proxy socks_proxy'
 # proxy
@@ -117,8 +123,9 @@ nsu()
 }
 
 alias tgit="ssh -vT git@github.com"
-alias tprx="curl www.google.com"
 alias tnet="ping -c 4 jd.com"
+alias tweb="curl jd.com"
+alias tprx="curl www.google.com"
 
 ################################################################
 # # ssh-agent
