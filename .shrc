@@ -54,7 +54,10 @@ alias -s zip="unzip"
 export APP_HOME="$HOME/Application"
 export LOCAL_HOME="$HOME/.local"
 export BUN_HOME="$HOME/.bun"
-export PATH="$APP_HOME/bin:$LOCAL_HOME/bin:$BUN_HOME/bin:$PATH"
+export CUDA_HOME="/usr/local/cuda"
+
+export PATH="$APP_HOME/bin:$LOCAL_HOME/bin:$BUN_HOME/bin:$CUDA_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
 
 ################################################################
 # # mirrors
