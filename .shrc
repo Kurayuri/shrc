@@ -51,6 +51,8 @@ alias -s zip="unzip"
 
 ################################################################
 # # environment variables
+SHRC_SCRIPTS_HOME="$HOME/.shrc_scripts"
+
 export APP_HOME="$HOME/Application"
 export LOCAL_HOME="$HOME/.local"
 export BUN_HOME="$HOME/.bun"
@@ -364,16 +366,16 @@ ulimit -n 65536
 
 ################################################################
 # # source .shrc
-src()
+_shrc_source_shrc()
 {   
     command echo "Current shell: $SHELL"
     . ~/."$(basename $SHELL)"rc
 }
 
 # # update .shrc
-urc()
+_shrc_update_shrc()
 {
-    command wget https://gitee.com/kurayuri/shrc/raw/main/.shrc -O ~/.shrc_new
+    command curl https://gitee.com/kurayuri/shrc/raw/main/.shrc -o ~/.shrc_new
     if [ $? = 0 ]; then
         . ~/.shrc_new
         if [ $? = 0 ]; then
@@ -385,6 +387,52 @@ urc()
     else
         command rm ~/.shrc_new
     fi
-    src
+    _shrc_source_shrc
 }
+
+_shrc_update_script()
+{
+    if [ $# = 0 ]; then
+        echo "Usage: ush <script_name>"
+    else
+        command curl https://gitee.com/kurayuri/scripts/raw/main/$1 -o $SHRC_SCRIPTS_HOME/$1.sh
+        if [ $? = 0 ]; then
+            command chmod +x $1.sh
+        fi
+    fi
+}
+
+_shrc_run_script()
+{
+    # TODO
+    if [ $# = 0 ]; then
+        echo "Usage: ush <script_name>"
+    else
+        command $SHRC_SCRIPTS_HOME/$1.sh
+    fi
+}
+
+shrc()
+{
+    if [ $# = 0 ]; then
+        echo "Usage: shrc <script_name>"
+        return
+    fi
+    if [ "$1" = update ]; then 
+        _shrc_update_shrc ${@:2}
+    elif [ "$1" = source ]; then
+        _shrc_source_shrc ${@:2}
+    elif [ "$1" = install ]; then
+        _shrc_update_script ${@:2}
+    elif [ "$1" = run ]; then
+        _shrc_update_script ${@:2}
+    fi    
+}
+
+
+
+alias src='shrc source'
+alias urc='shrc update'
+alias ish='shrc install'
+alias rsh='shrc run'
 ################################################################
