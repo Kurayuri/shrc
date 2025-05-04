@@ -56,9 +56,10 @@ SHRC_SCRIPTS_HOME="$HOME/.shrc_scripts"
 export APP_HOME="$HOME/Application"
 export LOCAL_HOME="$HOME/.local"
 export BUN_HOME="$HOME/.bun"
+export ELAN_HOME="$HOME/.elan"
 export CUDA_HOME="/usr/local/cuda"
 
-export PATH="$APP_HOME/bin:$LOCAL_HOME/bin:$BUN_HOME/bin:$CUDA_HOME/bin:$PATH"
+export PATH="$APP_HOME/bin:$LOCAL_HOME/bin:$BUN_HOME/bin:$ELAN_HOME/bin:$CUDA_HOME/bin:$PATH"
 export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
 
 ################################################################
