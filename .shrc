@@ -92,8 +92,9 @@ proxy()
         protocal=$3
     fi
     export all_proxy="${protocal}://${ip}:${port}" http_proxy="${protocal}://${ip}:${port}" https_proxy="${protocal}://${ip}:${port}" socks_proxy="${protocal}://${ip}:${port}"
+    export ALL_PROXY="${protocal}://${ip}:${port}" HTTP_PROXY="${protocal}://${ip}:${port}" HTTPS_PROXY="${protocal}://${ip}:${port}" SOCKS_PROXY="${protocal}://${ip}:${port}"
 }
-alias unproxy='unset all_proxy http_proxy https_proxy socks_proxy'
+alias unproxy='unset all_proxy http_proxy https_proxy socks_proxy ALL_PROXY HTTP_PROXY HTTPS_PROXY SOCKS_PROXY'
 # proxy
 
 ################################################################
