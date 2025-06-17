@@ -71,6 +71,15 @@ export HF_ENDPOINT='https://hf-mirror.com'
 alias av='source ./bin/activate'
 alias dv='deactivate'
 
+################################################################
+# # ssh
+tscp()
+{
+    src=$1
+    remote=$2
+    dst=$3
+    tar cf - $src | ssh $remote "tar xf - -C $dst"
+}
 
 ################################################################
 # # Proxy
