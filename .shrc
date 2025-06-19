@@ -236,6 +236,22 @@ dk()
         command docker exec -it "${@:2}"
     elif [ "$1" = xb ]; then
         command docker exec -it "${@:2}" bash
+    elif [ "$1" = c ]; then
+        command docker context "${@:2}"
+    elif [ "$1" = cn ]; then
+        command docker context create "${@:2}"
+    elif [ "$1" = crm ]; then
+        command docker context rm "${@:2}"
+    elif [ "$1" = cl ]; then
+        command docker context list "${@:2}"
+    elif [ "$1" = cu ]; then
+        command docker context use "${@:2}"
+    elif [ "$1" = cud ]; then
+        command docker context use default
+    elif [ "$1" = cc ]; then
+        command docker context show "${@:2}"
+    elif [ "$1" = i ]; then
+        command docker info "${@:2}"
     else
         command docker "$@"
     fi
