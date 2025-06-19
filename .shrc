@@ -35,18 +35,22 @@ alias runner="ps aux | awk '{print \$1}' | sort | uniq"
 
 ################################################################
 # # global alias
-alias -g H='| head'
-alias -g T='| tail'
-alias -g G='| grep'
+if [[ -n "$ZSH_VERSION" ]]; then
+    alias -g H='| head'
+    alias -g T='| tail'
+    alias -g G='| grep'
+fi
 
 
 ################################################################
 # # suffix alias
-alias -s deb="dpkg -i"
-alias -s gz="tar -zxvf"
-alias -s tar="tar -xvf"
-alias -s tgz="tar -zxvf"
-alias -s zip="unzip"
+if [[ -n "$ZSH_VERSION" ]]; then
+    alias -s deb="dpkg -i"
+    alias -s gz="tar -zxvf"
+    alias -s tar="tar -xvf"
+    alias -s tgz="tar -zxvf"
+    alias -s zip="unzip"
+fi
 
 
 ################################################################
