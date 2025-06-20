@@ -421,6 +421,18 @@ _shrc_update_shrc()
     _shrc_source_shrc
 }
 
+# # edit .shrc
+_shrc_edit_shrc()
+{
+    vim ~/.shrc
+}
+
+# # view .shrc
+_shrc_view_shrc()
+{
+    command cat ~/.shrc
+} 
+
 _shrc_update_script()
 {
     if [ $# = 0 ]; then
@@ -453,6 +465,10 @@ shrc()
         _shrc_update_shrc ${@:2}
     elif [ "$1" = source ]; then
         _shrc_source_shrc ${@:2}
+    elif [ "$1" = edit ]; then
+        _shrc_edit_shrc ${@:2}
+    elif [ "$1" = view ]; then
+        _shrc_view_shrc ${@:2}
     elif [ "$1" = install ]; then
         _shrc_update_script ${@:2}
     elif [ "$1" = run ]; then
@@ -464,6 +480,8 @@ shrc()
 
 alias src='shrc source'
 alias urc='shrc update'
+alias erc='shrc edit'
+alias vrc='shrc view'
 alias ish='shrc install'
 alias rsh='shrc run'
 ################################################################
