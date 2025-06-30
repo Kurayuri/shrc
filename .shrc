@@ -228,6 +228,8 @@ dk()
         command docker start "$2" && docker exec -it "${@:2}" 
     elif [ "$1" = sab ]; then
         command docker start "${@:2}" && docker exec -it "${@:2}" bash
+    elif [ "$1" = saz ]; then
+        command docker start "${@:2}" && docker exec -it "${@:2}" zsh
     elif [ "$1" = sp ]; then
         command docker stop "${@:2}"
     elif [ "$1" = x ]; then
@@ -236,6 +238,8 @@ dk()
         command docker exec -it "${@:2}"
     elif [ "$1" = xb ]; then
         command docker exec -it "${@:2}" bash
+    elif [ "$1" = xz ]; then
+        command docker exec -it "${@:2}" zsh
     elif [ "$1" = c ]; then
         command docker context "${@:2}"
     elif [ "$1" = cn ]; then
