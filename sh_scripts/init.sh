@@ -36,6 +36,7 @@ APP_HOME="$HOME/Application"
 
 ################################################################
 # # apt
+sudo apt update
 sudo apt install -y tmux zsh curl wget git git-lfs net-tools
 
 ################################################################
