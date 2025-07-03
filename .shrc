@@ -25,6 +25,7 @@ alias du0="du -s   -h | sort -h"
 alias du1="du -d 1 -h | sort -h"
 
 alias h="history"
+alias x="${SHELL}"
 
 alias wa='watch -n 0.1'
 alias wanv="wa nvidia-smi"
@@ -152,9 +153,9 @@ alias tprx="curl www.google.com"
 ssa()
 {
     eval "$(ssh-agent -s)"
-    cd ~/.ssh
+    cd ${HOME}/.ssh
     ssh-add *id*
-    cd ~
+    cd ${HOME}
 }
 # ssa
 
@@ -400,27 +401,47 @@ ulimit -n 65536
 
 
 ################################################################
+## shrc
+
+
+_shrc_SHELL_rc_path()
+{
+    echo "${HOME}/."$(basename $SHELL)"rc"
+}
+
+_shrc_SHELL_history_path()
+{
+    echo "${HOME}/."$(basename $SHELL)"_history"
+}
+
+# clear history
+_shrc_SHELL_clear_history()
+{   
+    echo "Clear history: $(_shrc_SHELL_history_path)"
+    command rm $(_shrc_SHELL_history_path)
+}
+
 # # source .shrc
 _shrc_source_shrc()
 {   
     command echo "Current shell: $SHELL"
-    . ~/."$(basename $SHELL)"rc
+    . $(_shrc_SHELL_rc_path)
 }
 
 # # update .shrc
 _shrc_update_shrc()
 {
-    command curl https://gitee.com/kurayuri/shrc/raw/main/.shrc -o ~/.shrc_new
+    command curl https://gitee.com/kurayuri/shrc/raw/main/.shrc -o ${HOME}/.shrc_new
     if [ $? = 0 ]; then
-        . ~/.shrc_new
+        . ${HOME}/.shrc_new
         if [ $? = 0 ]; then
-            command rm ~/.shrc
-            command mv ~/.shrc_new ~/.shrc
+            command rm ${HOME}/.shrc
+            command mv ${HOME}/.shrc_new ${HOME}/.shrc
         else
-            command rm ~/.shrc_new
+            command rm ${HOME}/.shrc_new
         fi
     else
-        command rm ~/.shrc_new
+        command rm ${HOME}/.shrc_new
     fi
     _shrc_source_shrc
 }
@@ -428,13 +449,13 @@ _shrc_update_shrc()
 # # edit .shrc
 _shrc_edit_shrc()
 {
-    vim ~/.shrc
+    vim ${HOME}/.shrc
 }
 
 # # view .shrc
 _shrc_view_shrc()
 {
-    command cat ~/.shrc
+    command cat ${HOME}/.shrc
 } 
 
 _shrc_update_script()
@@ -477,6 +498,12 @@ shrc()
         _shrc_update_script ${@:2}
     elif [ "$1" = run ]; then
         _shrc_update_script ${@:2}
+    elif [ "$1" = clear ]; then
+        _shrc_SHELL_clear_history ${@:2}
+    else
+        echo "Unknown command: $1"
+        echo "Usage: shrc <command> [<args>]"
+        echo "Available commands: source, update, edit, view, install, run, clear"
     fi    
 }
 
@@ -488,4 +515,5 @@ alias erc='shrc edit'
 alias vrc='shrc view'
 alias ish='shrc install'
 alias rsh='shrc run'
+alias csh='shrc clear'
 ################################################################
