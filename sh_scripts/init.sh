@@ -36,8 +36,15 @@ APP_HOME="$HOME/Application"
 
 ################################################################
 # # apt
-sudo apt update
-sudo apt install -y tmux zsh curl wget git git-lfs net-tools
+
+if [ "$(id -u)" -eq 0 ]; then
+  SUDO=""
+else
+  SUDO="sudo"
+fi
+
+$SUDO apt update
+$SUDO apt install -y tmux zsh curl wget git git-lfs net-tools
 
 ################################################################
 # # Anaconda
@@ -114,13 +121,15 @@ echo "$theme" > $ZSH/themes/crash.zsh-theme
 sed -i "s|<\${DEVC_ID}>|${DEVC_ID}|g" $ZSH/themes/crash.zsh-theme
 
 # sed -i "1i export DEVC_ID=$DEVC_ID" $ZSHRC
+echo "export DEVC_ID='$DEVC_ID'" >> $ZSHRC
+echo "export SHELL=$(which zsh)" >> $ZSHRC
 echo "export APP_HOME='$APP_HOME'" >> $ZSHRC
 echo "export CONDA_HOME='$ANACONDA_INSTALL_DIR'" >> $ZSHRC
-echo "source ~/.shrc" >> $ZSHRC
+echo "source ${HOME}/.shrc" >> $ZSHRC
 echo 'cni' >> $ZSHRC
 
 BASHRC="$HOME/.bashrc"
-echo "source ~/.shrc" >> $BASHRC
+echo "source ${HOME}/.shrc" >> $BASHRC
 
 ################################################################
 # # Github CLI
@@ -132,3 +141,4 @@ echo "source ~/.shrc" >> $BASHRC
 # && sudo apt install gh -y
 
 # gh auth login
+
