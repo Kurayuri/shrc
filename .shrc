@@ -29,6 +29,8 @@ alias x="${SHELL}"
 
 alias wa='watch -n 0.1'
 alias wanv="wa nvidia-smi"
+alias nvt="python3 -m nvitop"
+alias wanvt="python3 -m nvitop --colorful --interval 0.25"
 
 alias pa='ps aux'
 alias runner="ps aux | awk '{print \$1}' | sort | uniq"
