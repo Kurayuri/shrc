@@ -235,6 +235,8 @@ dk()
         command docker start "${@:2}" && docker exec -it "${@:2}" zsh
     elif [ "$1" = sp ]; then
         command docker stop "${@:2}"
+    elif [ "$1" = rs]; then
+        command docker restart "${@:2}"
     elif [ "$1" = x ]; then
         command docker exec "${@:2}"
     elif [ "$1" = xt ]; then
