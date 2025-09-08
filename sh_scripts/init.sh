@@ -44,7 +44,7 @@ else
 fi
 
 $SUDO apt update
-$SUDO apt install -y tmux zsh curl wget git git-lfs net-tools
+$SUDO apt install -y tmux zsh curl wget git git-lfs net-tools psmisc
 
 ################################################################
 # # Anaconda
