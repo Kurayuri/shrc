@@ -86,10 +86,51 @@ alias dv='deactivate'
 # # ssh
 tscp()
 {
-    src=$1
-    remote=$2
-    dst=$3
-    tar cf - $src | ssh $remote "tar xf - -C $dst"
+    local OPTIND
+    local use_compression=false
+    local pull_mode=false
+    local tar_opts_create="cf"
+    local tar_opts_extract="xf"
+
+    while getopts "zr" opt; do
+        case $opt in
+            z)
+                use_compression=true
+                tar_opts_create="czf"
+                tar_opts_extract="xzf"
+                ;;
+            r)
+                pull_mode=true
+                ;;
+            \?)
+                echo "Invalid option: -$OPTARG" >&2
+                return 1
+                ;;
+        esac
+    done
+    shift $((OPTIND-1))
+
+    if [ "$pull_mode" = true ]; then
+        # Pull mode: remote -> local
+        remote=$1
+        src=$2
+        dst=$3
+        if [ -z "$remote" ] || [ -z "$src" ] || [ -z "$dst" ]; then
+            echo "Usage: tscp -r [-z] <remote> <remote_src> <local_dst>"
+            return 1
+        fi
+        ssh "$remote" "tar $tar_opts_create - -C $(dirname "$src") $(basename "$src")" | tar "$tar_opts_extract" - -C "$dst"
+    else
+        # Push mode: local -> remote
+        src=$1
+        remote=$2
+        dst=$3
+        if [ -z "$src" ] || [ -z "$remote" ] || [ -z "$dst" ]; then
+            echo "Usage: tscp [-z] <local_src> <remote> <remote_dst>"
+            return 1
+        fi
+        tar "$tar_opts_create" - "$src" | ssh "$remote" "tar $tar_opts_extract - -C $dst"
+    fi
 }
 
 ################################################################
