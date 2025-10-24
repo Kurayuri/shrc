@@ -52,153 +52,193 @@ alias wanv="wa nvidia-smi"
 alias nvt="python3 -m nvitop"
 alias wanvt="python3 -m nvitop --colorful --interval 0.25"
 
+alias pa="ps aux"
 alias runner="ps aux | awk '{print \$1}' | sort | uniq"
 
 ################################################################
 # # ps
-pa()
+px()
 {
-    # --- User Filter Parsing ---
-    local user_filter_regex=".*" # Default: match all users
+    # --- 1. Parse Function-Specific Flags ---
+    
+    local ps_args="aux"       # Default arguments for ps
+    local processed_args=() # To store args after parsing our custom flags
+    
+    # Pre-parse all arguments to find our custom '-ps' flag
+    while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "-ps" ]]; then
+            if [[ -z "$2" ]]; then
+                echo "Error: -ps option requires arguments (e.g., 'auxww')." >&2
+                return 1
+            fi
+            ps_args="$2"
+            shift 2 # Consume -ps and its value
+        else
+            # Not our -ps flag, add it to the list for later processing
+            processed_args+=("$1")
+            shift 1
+        fi
+    done
+
+    # Restore the remaining arguments ($1, $2, etc.) for the next parsing stage
+    set -- "${processed_args[@]}"
+
+    # --- 2. Parse User Filters ---
+    
+    local user_pattern=".*" # Default: Match all users
     local current_user="$USER"
 
-    # Check if the first argument is one of our special user flags
-    # We use "==" to match the full string, not globbing
+    # Check for special user flags (must be the first remaining argument)
+    # Use "==" for exact string match
     if [[ "$1" == "-u" || "$1" == "-ur" || "$1" == "-ui" || "$1" == "-up" ]]; then
         case "$1" in
             -u)
-                # -u <user>
+                # -u <username>
                 if [ -z "$2" ]; then
                     echo "Error: -u option requires a username." >&2
-                    echo "Usage: pa [-u user | -ur | -ui | -up] [r|ra|l|la] [search_string]" >&2
+                    echo "Usage: px [-ps ps_args] [-u user | -ur | -ui | -up] [r|ra|l|la] [search_string]" >&2
                     return 1
                 fi
-                # Create a regex to match this specific user
-                user_filter_regex="^$2$"
-                shift 2 # Consume -u and <user>
+                # Match this specific user
+                user_pattern="^$2$"
+                shift 2 # Consume flag and argument
                 ;;
             -ur)
                 # -u root
-                user_filter_regex="^root$"
-                shift 1 # Consume -ur
+                user_pattern="^root$"
+                shift 1 # Consume flag
                 ;;
             -ui)
                 # -u $USER
-                user_filter_regex="^${current_user}$"
-                shift 1 # Consume -ui
+                user_pattern="^${current_user}$"
+                shift 1 # Consume flag
                 ;;
             -up)
                 # -u root AND -u $USER
                 if [ "$current_user" = "root" ]; then
                     # If user is already root, just match root
-                    user_filter_regex="^root$"
+                    user_pattern="^root$"
                 else
-                    # Create a regex to match root OR the current user
-                    user_filter_regex="^(root|${current_user})$"
+                    # Match root OR the current user
+                    user_pattern="^(root|${current_user})$"
                 fi
-                shift 1 # Consume -up
+                shift 1 # Consume flag
                 ;;
         esac
     fi
-    # --- End User Filter Parsing ---
+
+    # --- 3. Parse Positional Mode/Search Arguments ---
     
-    # --- Positional Argument Parsing (Original Logic) ---
-    local stat_regex=".*"      # Default: match any STAT
-    local cmd_regex=".*"       # Default: match any command
-    local search_mode=""       # "prefix" (^...) or "contains" (...)
-    local search_target="col11"  # Default: "col11"
+    local stat_pattern=".*"      # Default: Match any process state
+    local cmd_pattern=".*"       # Default: Match any command string
+    local search_type="prefix"     # "prefix" (^...) or "contains" (.*...*)
+    local search_scope="col11"   # "col11" (command) or "full" (all args)
     local search_string=""
 
-    # Handle positional arguments (r, ra, l, la, etc.)
-    # $# is now the count of args *after* the user flags were shifted
+    # Handle mode/search arguments
+    # $# reflects args remaining after -ps and user flags were processed
     if [ $# -gt 0 ]; then
         case "$1" in
             l)
-                stat_regex="^[RSD]"
-                search_mode="prefix"
-                search_target="col11"
+                stat_pattern="^[RSD]"
+                search_type="prefix"
+                search_scope="col11"
                 ;;
             la)
-                stat_regex="^[RSD]"
-                search_mode="contains"
-                search_target="full"
+                stat_pattern="^[RSD]"
+                search_type="contains"
+                search_scope="full"
                 ;;
             r)
-                stat_regex="^[R]"
-                search_mode="prefix"
-                search_target="col11"
+                stat_pattern="^[R]"
+                search_type="prefix"
+                search_scope="col11"
                 ;;
             ra)
-                stat_regex="^[R]"
-                search_mode="contains"
-                search_target="full"
+                stat_pattern="^[R]"
+                search_type="contains"
+                search_scope="full"
                 ;;
             *)
                 echo "Error: Unknown argument '$1'" >&2
-                echo "Usage: pa [-u user | -ur | -ui | -up] [r|ra|l|la] [search_string]" >&2
+                echo "Usage: px [-ps ps_args] [-u user | -ur | -ui | -up] [r|ra|l|la] [search_string]" >&2
                 return 1
                 ;;
         esac
+        shift # Consume the mode argument (l, la, r, ra)
 
-        if [ $# -gt 1 ]; then
+        if [ $# -gt 0 ]; then
             # If a second argument (search string) exists
-            search_string="$2"
+            search_string="$1"
             
-            # [Safety Fix] Prevent awk from matching its own process
+            # [Safety] Create a regex like "[s]shd" to avoid matching the awk process itself
             local first_char="${search_string:0:1}"
             local rest_chars="${search_string:1}"
             local safe_search_pattern="[${first_char}]${rest_chars}"
             
-            if [ "$search_mode" = "prefix" ]; then
-                cmd_regex="^${safe_search_pattern}"
+            if [ "$search_type" = "prefix" ]; then
+                cmd_pattern="^${safe_search_pattern}"
             else
-                cmd_regex="${safe_search_pattern}"
+                cmd_pattern="${safe_search_pattern}"
             fi
+            
+            # We don't shift here, as there are no more arguments
         fi
     fi
     
-    # --- AWK Execution ---
+    # --- 4. Execute ps and awk ---
     
-    # Modified awk script to use a regex for user filtering
+    # awk script to filter processes
     local awk_script='
-        # Rule 1: Always print the header (First line)
+        # 1. Always print the header
         NR == 1 { print; next }
 
-        # Rule 2: Filter on USER ($1) using the regex 'user_pat'
-        # We check user_pat != ".*" for a minor optimization
-        (user_pat != ".*" && $1 !~ user_pat) { next }
+        # 2. Filter by user (col 1) using the user_regex variable
+        # (Optimization: skip check if regex is ".*")
+        (user_regex != ".*" && $1 !~ user_regex) { next }
 
-        # Rule 3: Filter on STAT ($8) using 'stat_pat'
-        ($8 ~ stat_pat) {
+        # 3. Filter by state (col 8) using the stat_regex variable
+        ($8 ~ stat_regex) {
             
-            # Rule 4: Decide search scope based on 'target'
-            if (target == "col11") {
-                # [Without 'a'] Check only $11
-                if ($11 ~ cmd_pat) {
+            # 4. Filter by command string (col 11+) based on the scope
+            if (scope == "col11") {
+                # "col11" scope: check only the command name ($11)
+                if ($11 ~ cmd_regex) {
                     print
                 }
             } else {
-                # [With 'a'] Rebuild the full command
+                # "full" scope: rebuild the full command string from col 11 to the end
                 cmd = ""
                 for (i = 11; i <= NF; i++) {
                     cmd = cmd $i " "
                 }
                 
-                # Check the reconstructed "cmd" string
-                if (cmd ~ cmd_pat) {
+                # Check the full command string
+                if (cmd ~ cmd_regex) {
                     print
                 }
             }
         }
     '
   
-    # Pass the new user_filter_regex to awk's 'user_pat' variable
-    command ps aux | awk -v user_pat="$user_filter_regex" \
-                           -v stat_pat="$stat_regex" \
-                           -v cmd_pat="$cmd_regex" \
-                           -v target="$search_target" \
-                           "$awk_script"
+    # Pass shell variables to awk and execute
+    # We use `command ps $ps_args` so that $ps_args (e.g., "aux --forest")
+    # is correctly word-split by the shell into multiple arguments for ps.
+    command ps $ps_args | awk -v user_regex="$user_pattern" \
+                              -v stat_regex="$stat_pattern" \
+                              -v cmd_regex="$cmd_pattern" \
+                              -v scope="$search_scope" \
+                              "$awk_script"
 }
+
+alias pxl='px l'
+alias pxla='px la'
+alias pxr='px r'
+alias pxra='px ra'
+alias pxil='px -ui l'
+alias pxila='px -ui la'
+alias pxir='px -ui r'
+alias pxira='px -ui ra'
 
 
 ################################################################
@@ -603,15 +643,15 @@ cni
 
 ################################################################
 # # sudo
-sudoenv() {
+sudox() {
     if [ $# -eq 0 ]; then
-        echo "Usage: sudoenv <command> [args...]" >&2
+        echo "Usage: sudox <command> [args...]" >&2
         return 1
     fi
   
     sudo bash -c "shopt -s expand_aliases;
         source \"$SHRC_PATH\";eval \"\$@\"
-    " "sudoenv" "$@"
+    " "sudox" "$@"
 }
 
 
@@ -712,6 +752,7 @@ _shrc_update_shrc()
 {
     command curl https://gitee.com/kurayuri/shrc/raw/main/.shrc -o ${HOME}/.shrc_new
     if [ $? = 0 ]; then
+        unalias -a          # avoid alias conflict
         . ${HOME}/.shrc_new
         if [ $? = 0 ]; then
             command rm $SHRC_PATH
