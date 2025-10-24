@@ -52,8 +52,153 @@ alias wanv="wa nvidia-smi"
 alias nvt="python3 -m nvitop"
 alias wanvt="python3 -m nvitop --colorful --interval 0.25"
 
-alias pa='ps aux'
 alias runner="ps aux | awk '{print \$1}' | sort | uniq"
+
+################################################################
+# # ps
+pa()
+{
+    # --- User Filter Parsing ---
+    local user_filter_regex=".*" # Default: match all users
+    local current_user="$USER"
+
+    # Check if the first argument is one of our special user flags
+    # We use "==" to match the full string, not globbing
+    if [[ "$1" == "-u" || "$1" == "-ur" || "$1" == "-ui" || "$1" == "-up" ]]; then
+        case "$1" in
+            -u)
+                # -u <user>
+                if [ -z "$2" ]; then
+                    echo "Error: -u option requires a username." >&2
+                    echo "Usage: pa [-u user | -ur | -ui | -up] [r|ra|l|la] [search_string]" >&2
+                    return 1
+                fi
+                # Create a regex to match this specific user
+                user_filter_regex="^$2$"
+                shift 2 # Consume -u and <user>
+                ;;
+            -ur)
+                # -u root
+                user_filter_regex="^root$"
+                shift 1 # Consume -ur
+                ;;
+            -ui)
+                # -u $USER
+                user_filter_regex="^${current_user}$"
+                shift 1 # Consume -ui
+                ;;
+            -up)
+                # -u root AND -u $USER
+                if [ "$current_user" = "root" ]; then
+                    # If user is already root, just match root
+                    user_filter_regex="^root$"
+                else
+                    # Create a regex to match root OR the current user
+                    user_filter_regex="^(root|${current_user})$"
+                fi
+                shift 1 # Consume -up
+                ;;
+        esac
+    fi
+    # --- End User Filter Parsing ---
+    
+    # --- Positional Argument Parsing (Original Logic) ---
+    local stat_regex=".*"      # Default: match any STAT
+    local cmd_regex=".*"       # Default: match any command
+    local search_mode=""       # "prefix" (^...) or "contains" (...)
+    local search_target="col11"  # Default: "col11"
+    local search_string=""
+
+    # Handle positional arguments (r, ra, l, la, etc.)
+    # $# is now the count of args *after* the user flags were shifted
+    if [ $# -gt 0 ]; then
+        case "$1" in
+            l)
+                stat_regex="^[RSD]"
+                search_mode="prefix"
+                search_target="col11"
+                ;;
+            la)
+                stat_regex="^[RSD]"
+                search_mode="contains"
+                search_target="full"
+                ;;
+            r)
+                stat_regex="^[R]"
+                search_mode="prefix"
+                search_target="col11"
+                ;;
+            ra)
+                stat_regex="^[R]"
+                search_mode="contains"
+                search_target="full"
+                ;;
+            *)
+                echo "Error: Unknown argument '$1'" >&2
+                echo "Usage: pa [-u user | -ur | -ui | -up] [r|ra|l|la] [search_string]" >&2
+                return 1
+                ;;
+        esac
+
+        if [ $# -gt 1 ]; then
+            # If a second argument (search string) exists
+            search_string="$2"
+            
+            # [Safety Fix] Prevent awk from matching its own process
+            local first_char="${search_string:0:1}"
+            local rest_chars="${search_string:1}"
+            local safe_search_pattern="[${first_char}]${rest_chars}"
+            
+            if [ "$search_mode" = "prefix" ]; then
+                cmd_regex="^${safe_search_pattern}"
+            else
+                cmd_regex="${safe_search_pattern}"
+            fi
+        fi
+    fi
+    
+    # --- AWK Execution ---
+    
+    # Modified awk script to use a regex for user filtering
+    local awk_script='
+        # Rule 1: Always print the header (First line)
+        NR == 1 { print; next }
+
+        # Rule 2: Filter on USER ($1) using the regex 'user_pat'
+        # We check user_pat != ".*" for a minor optimization
+        (user_pat != ".*" && $1 !~ user_pat) { next }
+
+        # Rule 3: Filter on STAT ($8) using 'stat_pat'
+        ($8 ~ stat_pat) {
+            
+            # Rule 4: Decide search scope based on 'target'
+            if (target == "col11") {
+                # [Without 'a'] Check only $11
+                if ($11 ~ cmd_pat) {
+                    print
+                }
+            } else {
+                # [With 'a'] Rebuild the full command
+                cmd = ""
+                for (i = 11; i <= NF; i++) {
+                    cmd = cmd $i " "
+                }
+                
+                # Check the reconstructed "cmd" string
+                if (cmd ~ cmd_pat) {
+                    print
+                }
+            }
+        }
+    '
+  
+    # Pass the new user_filter_regex to awk's 'user_pat' variable
+    command ps aux | awk -v user_pat="$user_filter_regex" \
+                           -v stat_pat="$stat_regex" \
+                           -v cmd_pat="$cmd_regex" \
+                           -v target="$search_target" \
+                           "$awk_script"
+}
 
 
 ################################################################
