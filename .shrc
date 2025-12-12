@@ -595,6 +595,14 @@ if [ -z "${CONDA_HOME}" ]; then
     export CONDA_HOME="$APP_HOME/anaconda3"
 fi
 
+_conda_fix_environments()
+{   
+    # write all conda env names to $HOME/.conda/environments.txt
+    # not startswith # and not empty line
+    # print the last column
+    conda env list | grep -v '^#' | grep -v '^$' | awk '{print $NF}' > $HOME/.conda/environments.txt
+}
+
 cni()
 {
     __conda_setup="$('$CONDA_HOME/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
@@ -625,6 +633,8 @@ cn()
         command conda create -n "$2" "${@:4}" python="$3"
     elif [ "$1" = rm ]; then
         command conda env remove -n "${@:2}"
+    elif [ "$1" = fx ]; then
+        _conda_fix_environments
     else
         command conda "$@"
     fi
