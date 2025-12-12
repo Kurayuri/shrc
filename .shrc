@@ -501,11 +501,6 @@ tx()
     fi
 }
 
-TMUX_CONF='set -g history-limit 1048576
-bind C-l send-keys C-l \; clear-history
-bind C-s capture-pane -S -  \; save-buffer tmux.log'
-echo $TMUX_CONF > $HOME/.tmux.conf
-
 
 ################################################################\
 # # docker
