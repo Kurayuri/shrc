@@ -574,6 +574,8 @@ pi()
         command tmux attach
     elif [ "$1" = i ]; then 
         command pip install "${@:2}"
+    elif [ "$1" = iv ]; then 
+        command uv pip install "${@:2}"
     elif [ "$1" = n ]; then 
         command pip install "${@:2}"
     elif [ "$1" = rm ]; then 
@@ -629,8 +631,12 @@ cn()
         command conda create "${@:2}"
     elif [ "$1" = nn ]; then
         command conda create -n "$2" "${@:3}" python
+    elif [ "$1" = nnv ]; then
+        command conda create -n "$2" "${@:3}" python uv
     elif [ "$1" = nnp ]; then
         command conda create -n "$2" "${@:4}" python="$3"
+    elif [ "$1" = nnpv ]; then
+        command conda create -n "$2" "${@:4}" python="$3" uv
     elif [ "$1" = rm ]; then
         command conda env remove -n "${@:2}"
     elif [ "$1" = fx ]; then
