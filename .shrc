@@ -590,6 +590,7 @@ pi()
 
 alias py='python'
 alias ipy='ipython'
+alias piv='uv pip install'
 
 
 ################################################################
@@ -633,11 +634,11 @@ cn()
     elif [ "$1" = nn ]; then
         command conda create -n "$2" "${@:3}" python
     elif [ "$1" = nnv ]; then
-        command conda create -n "$2" "${@:3}" python uv
+        command conda create -n "$2" "${@:3}" python conda-forge::uv
     elif [ "$1" = nnp ]; then
         command conda create -n "$2" "${@:4}" python="$3"
     elif [ "$1" = nnpv ]; then
-        command conda create -n "$2" "${@:4}" python="$3" uv
+        command conda create -n "$2" "${@:4}" python="$3" conda-forge::uv
     elif [ "$1" = rm ]; then
         command conda env remove -n "${@:2}"
     elif [ "$1" = fx ]; then
