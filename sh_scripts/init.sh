@@ -91,7 +91,7 @@ setup_zsh() {
   ZSH="$HOME/.oh-my-zsh"
 
   wget https://gitee.com/kurayuri/shrc/raw/main/.shrc -O $HOME/.shrc
-  sh -c "$(curl -fsSL https://raw.gitmirror.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  sh -c "$(curl -fsSL https://install.ohmyz.sh/)" "" --unattended
   sed -i 's/ZSH_THEME="\w\+"/ZSH_THEME="crash"/' $ZSHRC
 
   theme=$(cat << 'EOF'
