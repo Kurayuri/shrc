@@ -56,6 +56,46 @@ alias pa="ps aux"
 alias runner="ps aux | awk '{print \$1}' | sort | uniq"
 
 ################################################################
+# # global alias
+if [[ -n "$ZSH_VERSION" ]]; then
+    alias -g H='| head'
+    alias -g T='| tail'
+    alias -g G='| grep'
+    alias -g W='| wc -l'
+fi
+
+
+################################################################
+# # suffix alias
+if [[ -n "$ZSH_VERSION" ]]; then
+    alias -s deb="dpkg -i"
+    alias -s gz="tar -zxvf"
+    alias -s tar="tar -xvf"
+    alias -s tgz="tar -zxvf"
+    alias -s zip="unzip"
+fi
+
+
+################################################################
+# # mirrors
+export HF_ENDPOINT='https://hf-mirror.com'
+
+
+################################################################
+# # venv
+alias av='source ./bin/activate'
+alias dv='deactivate'
+
+
+################################################################
+# # shell
+cdf()
+{
+    cd "$(dirname "$1")"
+}
+
+
+################################################################
 # # ps
 px()
 {
@@ -240,36 +280,6 @@ alias pxila='px -ui la'
 alias pxir='px -ui r'
 alias pxira='px -ui ra'
 
-
-################################################################
-# # global alias
-if [[ -n "$ZSH_VERSION" ]]; then
-    alias -g H='| head'
-    alias -g T='| tail'
-    alias -g G='| grep'
-    alias -g W='| wc -l'
-fi
-
-
-################################################################
-# # suffix alias
-if [[ -n "$ZSH_VERSION" ]]; then
-    alias -s deb="dpkg -i"
-    alias -s gz="tar -zxvf"
-    alias -s tar="tar -xvf"
-    alias -s tgz="tar -zxvf"
-    alias -s zip="unzip"
-fi
-
-
-################################################################
-# # mirrors
-export HF_ENDPOINT='https://hf-mirror.com'
-
-################################################################
-# # venv
-alias av='source ./bin/activate'
-alias dv='deactivate'
 
 ################################################################
 # # ssh
