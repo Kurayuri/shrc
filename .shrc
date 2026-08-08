@@ -285,6 +285,7 @@ alias pxira='px -ui ra'
 # # ssh
 tscp()
 {
+    # tar scp: scp stream transfer with tar, speeding up dummy files scp
     # --------------------------------------------------------------------------
     # Helper function: Executes a command pipeline with retry logic.
     #
@@ -295,6 +296,13 @@ tscp()
     #   $3: A context message for logging, e.g., "Local file" or "Remote file".
     #   $4: The maximum number of retry attempts.
     # --------------------------------------------------------------------------
+    local tscp_help="Usage: tscp [-z] [-1] <local_src> <remote> <remote_dst>
+       tscp -r [-z] [-1] <remote> <remote_src> <local_dst>
+Options:
+     -z : Use gzip compression for the transfer.
+     -1 : Disable retries (only attempt once).
+     -r : Pull mode (remote to local). Without this flag, tscp operates in push mode (local to remote)."
+
     _tscp_execute() {
         local cmd1="$1"
         local cmd2="$2"
@@ -376,7 +384,7 @@ tscp()
         # Pull mode: remote -> local
         local remote=$1 src=$2 dst=$3
         if [ -z "$remote" ] || [ -z "$src" ] || [ -z "$dst" ]; then
-            echo "Usage: tscp -r [-z] [-1] <remote> <remote_src> <local_dst>"
+            echo $tscp_help
             return 1
         fi
         
@@ -390,7 +398,7 @@ tscp()
         # Push mode: local -> remote
         local src=$1 remote=$2 dst=$3
         if [ -z "$src" ] || [ -z "$remote" ] || [ -z "$dst" ]; then
-            echo "Usage: tscp [-z] [-1] <local_src> <remote> <remote_dst>"
+            echo $tscp_help
             return 1
         fi
         
@@ -408,25 +416,99 @@ tscp()
 # # Proxy
 # export host_ip=$(cat /etc/resolv.conf |grep "nameserver"|head -1 |cut -f 2 -d " ")
 
+_set_proxy()
+{   
+    if [ $# = 2 ]; then
+        # echo "Setting proxy to $1 and no_proxy to $2"
+        export http_proxy="$1" https_proxy="$1" ftp_proxy="$1" all_proxy="$1" no_proxy="$2"
+        export HTTP_PROXY="$1" HTTPS_PROXY="$1" FTP_PROXY="$1" ALL_PROXY="$1" NO_PROXY="$2"
+    else
+        echo "Usage: _set_proxy <proxy_url> <no_proxy_url>"
+        return 1
+    fi
+}
+
+_unset_proxy()
+{
+    unset http_proxy https_proxy ftp_proxy all_proxy no_proxy
+    unset HTTP_PROXY HTTPS_PROXY FTP_PROXY ALL_PROXY NO_PROXY
+}
+
 proxy()
 {
     local ip="localhost"
     local port=7890
-    local protocal="http"
-    if [ $# = 1 ]; then
-        ip=$1
-    elif [ $# = 2 ]; then
-        ip=$1
-        port=$2
-    elif [ $# = 3 ]; then
-        ip=$1
-        port=$2
-        protocal=$3
+    local protocol="http"
+    local proxy_url=""
+    local no_proxy_url="localhost,127.0.0.1,::1"
+
+    local proxy_args=()
+    local cmd_args=()
+    local found_delimiter=0
+
+    _proxy_help()
+    {
+        echo "Set proxy environment variables in the current shell."
+        echo "Usage:"
+        echo "  proxy [<ip> [<port> [<protocol>]]]"
+        echo "  proxy [<url>]"
+        echo "  proxy [proxy-options] -- <command> [args...]"
+        echo "  proxy -h"
+    }
+
+    # Split arguments around --
+    while [ $# -gt 0 ]; do
+        if [ "$1" = "--" ]; then
+            found_delimiter=1
+            shift
+            cmd_args=("$@")
+            break
+        fi
+
+        proxy_args+=("$1")
+        shift
+    done
+
+    set -- "${proxy_args[@]}"
+
+    if [ "${1:-}" = "-h" ]; then
+        _proxy_help
+        return 0
     fi
-    export all_proxy="${protocal}://${ip}:${port}" http_proxy="${protocal}://${ip}:${port}" https_proxy="${protocal}://${ip}:${port}" socks_proxy="${protocal}://${ip}:${port}" no_proxy="localhost,127.0.0.1,::1"
-    export ALL_PROXY="${protocal}://${ip}:${port}" HTTP_PROXY="${protocal}://${ip}:${port}" HTTPS_PROXY="${protocal}://${ip}:${port}" SOCKS_PROXY="${protocal}://${ip}:${port}" NO_PROXY="localhost,127.0.0.1,::1"
+
+    case $# in
+        0)  proxy_url="${PROXY_URL:-}" ;;
+        1)  case "$1" in
+                *://*) proxy_url="$1" ;;
+                *)     ip="$1" ;;
+            esac ;;
+        2)  ip="$1" ; port="$2" ;;
+        3)  ip="$1" ; port="$2"; protocol="$3" ;;
+        *)  _proxy_help >&2
+            return 2 ;;
+    esac
+
+    if [ -z "$proxy_url" ]; then
+        proxy_url="${protocol}://${ip}:${port}"
+    fi
+
+    if [ "$found_delimiter" -eq 1 ]; then
+        if [ ${#cmd_args[@]} -eq 0 ]; then
+            echo "proxy: no command specified after --" >&2
+            return 2
+        fi
+        (
+            _set_proxy "$proxy_url" "$no_proxy_url" && _shrc_eval "${cmd_args[@]}"
+        )
+    else
+        _set_proxy "$proxy_url" "$no_proxy_url"
+    fi
 }
-alias unproxy='unset all_proxy http_proxy https_proxy socks_proxy ALL_PROXY HTTP_PROXY HTTPS_PROXY SOCKS_PROXY'
+
+alias deproxy="_set_proxy '' ''"
+
+alias unproxy='_unset_proxy'
+
 # proxy
 
 ################################################################
@@ -434,49 +516,47 @@ alias unproxy='unset all_proxy http_proxy https_proxy socks_proxy ALL_PROXY HTTP
 alias ic="ifconfig"
 
 ns()
-{   
-    if [ $# = 0 ]; then
-        command netstat -anp
-    elif [ $# = 1 ]; then
-        command netstat -anp | grep $1
-    fi
+{
+    local OPTIND=1 opt protocol="" listening=""
+
+    while getopts ":tul" opt; do
+        case "$opt" in
+            t|u) protocol="$opt" ;;
+            l) listening=" LISTEN " ;;
+            h) echo "Usage: ns [-t|-u] [-l] [<pattern>]" >&2; return 1 ;;
+            *) return 1 ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    command netstat "-anp${protocol}" | grep -e "$listening" | grep -e "${1:-}" | grep --color=auto -e "$listening" -e "${1:-}"
 }
 
-
-nst()
-{   
-    if [ $# = 0 ]; then
-        command netstat -anpt
-    elif [ $# = 1 ]; then
-        command netstat -anpt | grep $1
-    fi
-}
-
-nsu()
-{   
-    if [ $# = 0 ]; then
-        command netstat -anpu
-    elif [ $# = 1 ]; then
-        command netstat -anpu | grep $1
-    fi
-}
+alias nst='ns -t'
+alias nsu='ns -u'
+alias nsl='ns -l'
 
 alias tgit="ssh -vT git@github.com"
-alias tnet="ping -c 4 jd.com"
-alias tweb="curl jd.com"
+alias tnet="ping -c 4 www.jd.com"
+alias tweb="curl www.jd.com"
 alias tprx="curl www.google.com"
 
-################################################################
-# # ssh-agent
-ssa()
-{
-    eval "$(ssh-agent -s)"
-    cd ${HOME}/.ssh
-    ssh-add *id*
-    cd ${HOME}
-}
-# ssa
 
+################################################################
+# # codex
+cx()
+{
+    if [ "$1" = r ]; then
+        command codex resume "${@:2}"
+    else 
+        command codex "$@"
+    fi
+}
+
+ccx()
+{
+    proxy -- cx "$@"
+}
 
 ################################################################
 # # tmux
@@ -739,6 +819,48 @@ contains() {
     fi
 }
 
+_shrc_eval()
+{
+    # executes a command just like in the shell, but used for shell inner call
+
+    if [ $# -eq 0 ]; then
+        return 0
+    fi
+
+    local cmd=""
+
+    if [ -n "${BASH_VERSION:-}" ]; then
+        # Bash: %q encode each argument for shell evaluation
+        local expand_aliases_was_set=0
+
+        shopt -q expand_aliases && expand_aliases_was_set=1
+        shopt -s expand_aliases
+
+        printf -v cmd '%q ' "$@"
+        eval "$cmd"
+        local status=$?
+
+        if [ "$expand_aliases_was_set" -eq 0 ]; then
+            shopt -u expand_aliases
+        fi
+
+        return "$status"
+
+    elif [ -n "${ZSH_VERSION:-}" ]; then
+        # Zsh: (q) encode each argument for shell evaluation, and (j: :) join them with spaces
+        local -a eval_args
+        eval_args=("$@")
+
+        cmd=${(j: :)${(q)eval_args}}
+        eval "$cmd"
+        return $?
+
+    else
+        echo "_shrc_eval: unsupported shell" >&2
+        return 2
+    fi
+}
+
 ################################################################
 # # settings
 ulimit -n 65536
@@ -773,7 +895,7 @@ _shrc_source_shrc()
 # # update .shrc
 _shrc_update_shrc()
 {
-    command curl https://gitee.com/kurayuri/shrc/raw/main/.shrc -o ${HOME}/.shrc_new
+    command curl -fSL https://gitee.com/kurayuri/shrc/raw/main/.shrc -o ${HOME}/.shrc_new
     if [ $? = 0 ]; then
         unalias -a          # avoid alias conflict
         . ${HOME}/.shrc_new
@@ -806,7 +928,7 @@ _shrc_update_script()
     if [ $# = 0 ]; then
         echo "Usage: ush <script_name>"
     else
-        command curl https://gitee.com/kurayuri/scripts/raw/main/$1 -o $SHRC_SCRIPTS_HOME/$1.sh
+        command curl -fsSL https://gitee.com/kurayuri/scripts/raw/main/$1 -o $SHRC_SCRIPTS_HOME/$1.sh
         if [ $? = 0 ]; then
             command chmod +x $1.sh
         fi
