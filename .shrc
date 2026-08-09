@@ -746,7 +746,8 @@ cni
 
 ################################################################
 # # sudo
-sudox() {
+sudox()
+{
     if [ $# -eq 0 ]; then
         echo "Usage: sudox <command> [args...]" >&2
         return 1
@@ -755,6 +756,40 @@ sudox() {
     sudo bash -c "shopt -s expand_aliases;
         source \"$SHRC_PATH\";eval \"\$@\"
     " "sudox" "$@"
+}
+
+
+################################################################
+# # service
+svc()
+{
+    _svc_list_i()
+    {
+        find ~/.config/systemd/user -maxdepth 1 -type f -printf '%f\n' | grep -e "${1:-}"
+        # find ~/.config/systemd/user -maxdepth 1 -type f -printf '%f\n' | grep -e "${1:-}" | sed 's/\.service$//'
+    }
+
+    if [ "$1" = l ]; then
+        command systemctl list-units --no-pager --type=service --all "${@:2}"
+    elif [ "$1" = lu ]; then
+        command systemctl list-units --no-pager --type=service --all --user "${@:2}"
+    elif [ "$1" = li ]; then
+        _svc_list_i
+    elif [ "$1" = sa ]; then
+        command systemctl start "${@:2}"
+    elif [ "$1" = sp ]; then
+        command systemctl stop "${@:2}"
+    elif [ "$1" = rs ]; then
+        command systemctl restart "${@:2}"
+    elif [ "$1" = p ]; then
+        command systemctl status --no-pager "${@:2}"
+    elif [ "$1" = pu ]; then
+        command systemctl status --no-pager --user "${@:2}"
+    elif [ "$1" = pi ]; then
+        command systemctl status --no-pager --user $(_svc_list_i $2) "${@:3}"
+    else
+        command systemctl "$@"
+    fi
 }
 
 
