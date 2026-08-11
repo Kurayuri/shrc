@@ -546,8 +546,14 @@ alias tprx="curl www.google.com"
 # # codex
 cx()
 {
-    if [ "$1" = r ]; then
+    if [ "$1" = a ]; then
+        command codex archive "${@:2}"
+    elif [ "$1" = r ]; then
         command codex resume "${@:2}"
+    elif [ "$1" = x ]; then
+        command codex exec "${@:2}"
+    elif [ "$1" = xe ]; then
+        command codex exec --ephemeral "${@:2}"
     else 
         command codex "$@"
     fi
@@ -765,7 +771,8 @@ svc()
 {
     _svc_list_i()
     {
-        find ~/.config/systemd/user -maxdepth 1 -type f -printf '%f\n' | grep -e "${1:-}"
+        find ~/.config/systemd/user -maxdepth 1 -name '*.service' -printf '%f\n' | grep -e "${1:-}" 
+        # find ~/.config/systemd/user -maxdepth 1 -type f -printf '%f\n' | grep -e "${1:-}"
         # find ~/.config/systemd/user -maxdepth 1 -type f -printf '%f\n' | grep -e "${1:-}" | sed 's/\.service$//'
     }
 
