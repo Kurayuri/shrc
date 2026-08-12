@@ -113,6 +113,30 @@ function ConvertFrom-Shortcut {
 }
 
 
+################################################################
+# # SSH
+function Connect-SshLocalPortForward {
+  [CmdletBinding()]
+  param (
+    [Parameter(Mandatory, Position = 0)]
+    [ValidateNotNullOrEmpty()]
+    [string]$HostName,
+
+    [Parameter(Mandatory, Position = 1)]
+    [ValidateRange(1, 65535)]
+    [int]$SourcePort,
+
+    [Parameter(Position = 2)]
+    [ValidateRange(1, 65535)]
+    [int]$DestinationPort = $SourcePort
+  )
+
+  & ssh -L "${SourcePort}:localhost:${DestinationPort}" $HostName
+}
+
+Set-Alias sshl Connect-SshLocalPortForward
+
+
 
 
 ################################################################
@@ -129,7 +153,10 @@ function Update-Profile {
   $url = "https://gitee.com/kurayuri/shrc/raw/main/Profile.ps1"
 
   try {
-    Invoke-WebRequest -Uri $url -OutFile $newProfilePath
+    & curl.exe -fSL $url -o $newProfilePath
+    if ($LASTEXITCODE -ne 0) {
+      throw "curl.exe exited with code $LASTEXITCODE."
+    }
 
     try {
       . $newProfilePath
@@ -153,6 +180,5 @@ function Update-Profile {
 Set-Alias src Invoke-Profile
 Set-Alias urc Update-Profile
 ################################################################
-
 
 
