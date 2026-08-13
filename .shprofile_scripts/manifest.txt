@@ -1,0 +1,4 @@
+# One extensionless shprofile script name per line.
+Connect-SshLocalPortForward
+Connect-TunnelRdp
+Remove-Ghosts

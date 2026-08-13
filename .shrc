@@ -22,6 +22,8 @@
 
 SHRC_PATH="$HOME/.shrc"
 SHRC_SCRIPTS_HOME="$HOME/.shrc_scripts"
+SHRC_REPO_RAW_URL="https://gitee.com/kurayuri/shrc/raw/main"
+SHRC_SCRIPTS_MANIFEST_URL="$SHRC_REPO_RAW_URL/.shrc_scripts/manifest.txt"
 
 export APP_HOME="$HOME/Application"
 export LOCAL_HOME="$HOME/.local"
@@ -285,130 +287,7 @@ alias pxira='px -ui ra'
 # # ssh
 tscp()
 {
-    # tar scp: scp stream transfer with tar, speeding up dummy files scp
-    # --------------------------------------------------------------------------
-    # Helper function: Executes a command pipeline with retry logic.
-    #
-    # Arguments:
-    #   $1: The first command in the pipeline (string). This command's stderr
-    #       is monitored for the "file changed" message.
-    #   $2: The second command in the pipeline (string).
-    #   $3: A context message for logging, e.g., "Local file" or "Remote file".
-    #   $4: The maximum number of retry attempts.
-    # --------------------------------------------------------------------------
-    local tscp_help="Usage: tscp [-z] [-1] <local_src> <remote> <remote_dst>
-       tscp -r [-z] [-1] <remote> <remote_src> <local_dst>
-Options:
-     -z : Use gzip compression for the transfer.
-     -1 : Disable retries (only attempt once).
-     -r : Pull mode (remote to local). Without this flag, tscp operates in push mode (local to remote)."
-
-    _tscp_execute() {
-        local cmd1="$1"
-        local cmd2="$2"
-        local context_msg="$3"
-        local max_retries="$4"
-
-        for (( attempt=1; attempt<=max_retries; attempt++ )); do
-            local temp_err_file
-            temp_err_file=$(mktemp)
-            
-            # Execute the pipeline.
-            # A { ...; } group is used to ensure the stderr redirection applies
-            # to the command executed by eval, not to eval itself.
-            (set -o pipefail; { eval "$cmd1"; } 2> "$temp_err_file" | eval "$cmd2")
-            local pipe_status=$?
-
-            # Check for the specific "file changed" warning.
-            if grep -q "file changed as we read it" "$temp_err_file"; then
-                # If this was the last attempt, report failure.
-                if (( attempt >= max_retries )); then
-                    echo "tscp: ${context_msg} changed, max attempts (${max_retries}) reached. Aborting." >&2
-                    cat "$temp_err_file" >&2
-                    rm -f "$temp_err_file"
-                    return 1
-                else
-                    # Otherwise, print a retry message and try again.
-                    echo "tscp: ${context_msg} changed, retrying... (${attempt}/${max_retries})" >&2
-                    rm -f "$temp_err_file"
-                    sleep 1
-                    continue
-                fi
-            fi
-
-            # If a different, non-recoverable error occurred, fail immediately.
-            if [[ $pipe_status -ne 0 ]]; then
-                echo "tscp: Transfer failed with a non-recoverable error." >&2
-                cat "$temp_err_file" >&2
-                rm -f "$temp_err_file"
-                return $pipe_status
-            fi
-            
-            # If we reach here, the command was successful.
-            rm -f "$temp_err_file"
-            return 0 # Success
-        done
-        
-        # This line should only be reached if the loop condition fails unexpectedly.
-        return 1
-    }
-
-    # --------------------------------------------------------------------------
-    # Main function logic
-    # --------------------------------------------------------------------------
-    local OPTIND
-    local use_compression=false
-    local pull_mode=false
-    local no_retry=false
-    local tar_opts_create="cf"
-    local tar_opts_extract="xf"
-
-    # Process command-line options.
-    while getopts "zr1" opt; do
-        case $opt in
-            z) use_compression=true; tar_opts_create="czf"; tar_opts_extract="xzf" ;;
-            r) pull_mode=true ;;
-            1) no_retry=true ;;
-            \?) echo "Invalid option: -$OPTARG" >&2; return 1 ;;
-        esac
-    done
-    shift $((OPTIND-1))
-
-    # Set max_retries to 1 if the -1 flag is present, otherwise default to 5.
-    local max_retries=5
-    if [ "$no_retry" = true ]; then
-        max_retries=1
-    fi
-
-    if [ "$pull_mode" = true ]; then
-        # Pull mode: remote -> local
-        local remote=$1 src=$2 dst=$3
-        if [ -z "$remote" ] || [ -z "$src" ] || [ -z "$dst" ]; then
-            echo $tscp_help
-            return 1
-        fi
-        
-        # Define the commands for pull mode.
-        local cmd1="ssh '$remote' \"tar $tar_opts_create - -C '$(dirname "$src")' '$(basename "$src")'\""
-        local cmd2="tar '$tar_opts_extract' - -C '$dst'"
-
-        # Execute using the helper function.
-        _tscp_execute "$cmd1" "$cmd2" "Remote file" "$max_retries"
-    else
-        # Push mode: local -> remote
-        local src=$1 remote=$2 dst=$3
-        if [ -z "$src" ] || [ -z "$remote" ] || [ -z "$dst" ]; then
-            echo $tscp_help
-            return 1
-        fi
-        
-        # Define the commands for push mode.
-        local cmd1="tar '$tar_opts_create' - '$src'"
-        local cmd2="ssh '$remote' \"tar '$tar_opts_extract' - -C '$dst'\""
-        
-        # Execute using the helper function.
-        _tscp_execute "$cmd1" "$cmd2" "Local file" "$max_retries"
-    fi
+    shrc run tscp "$@"
 }
 
 
@@ -949,19 +828,26 @@ _shrc_source_shrc()
 # # update .shrc
 _shrc_update_shrc()
 {
-    command curl -fSL https://gitee.com/kurayuri/shrc/raw/main/.shrc -o ${HOME}/.shrc_new
-    if [ $? = 0 ]; then
-        unalias -a          # avoid alias conflict
-        . ${HOME}/.shrc_new
-        if [ $? = 0 ]; then
-            command rm $SHRC_PATH
-            command mv ${HOME}/.shrc_new $SHRC_PATH
-        else
-            command rm ${HOME}/.shrc_new
-        fi
-    else
-        command rm ${HOME}/.shrc_new
+    local shrc_new="${HOME}/.shrc_new"
+
+    if ! command curl -fsSL -o "$shrc_new" -- "$SHRC_REPO_RAW_URL/.shrc"; then
+        command rm -f -- "$shrc_new"
+        return 1
     fi
+
+    unalias -a          # avoid alias conflict
+    if ! . "$shrc_new"; then
+        command rm -f -- "$shrc_new"
+        _shrc_source_shrc
+        return 1
+    fi
+
+    if ! command mv -f -- "$shrc_new" "$SHRC_PATH"; then
+        command rm -f -- "$shrc_new"
+        _shrc_source_shrc
+        return 1
+    fi
+
     _shrc_source_shrc
 }
 
@@ -979,51 +865,199 @@ _shrc_view_shrc()
 
 _shrc_update_script()
 {
-    if [ $# = 0 ]; then
-        echo "Usage: ush <script_name>"
-    else
-        command curl -fsSL https://gitee.com/kurayuri/scripts/raw/main/$1 -o $SHRC_SCRIPTS_HOME/$1.sh
-        if [ $? = 0 ]; then
-            command chmod +x $1.sh
-        fi
+    if [ $# -ne 1 ]; then
+        echo "Usage: ish <script_name>" >&2
+        return 2
     fi
+
+    local script_name="$1"
+    local script_path=""
+    local script_new=""
+
+    if ! _shrc_valid_script_name "$script_name"; then
+        echo "ish: invalid script name: $script_name" >&2
+        echo "Script names use letters, numbers, underscores, and hyphens without a .sh suffix." >&2
+        return 2
+    fi
+
+    command mkdir -p -- "$SHRC_SCRIPTS_HOME" || return 1
+    script_path="$SHRC_SCRIPTS_HOME/$script_name.sh"
+    script_new=$(command mktemp "$script_path.new.XXXXXX") || return 1
+
+    if command curl -fsSL -o "$script_new" -- "$SHRC_REPO_RAW_URL/.shrc_scripts/$script_name.sh" \
+        && command chmod +x "$script_new" \
+        && command mv -f -- "$script_new" "$script_path"; then
+        command echo "Installed: $script_name"
+        return 0
+    fi
+
+    command rm -f -- "$script_new"
+    echo "ish: failed to install script: $script_name" >&2
+    return 1
+}
+
+_shrc_valid_script_name()
+{
+    if [ $# -ne 1 ]; then
+        return 1
+    fi
+
+    case "$1" in
+        ""|-a|*.sh|[-_]*|*[!A-Za-z0-9_-]*) return 1 ;;
+        *) return 0 ;;
+    esac
+}
+
+_shrc_update_all_scripts()
+{
+    local manifest_new=""
+    local script_name=""
+    local script_count=0
+    local -a failed_scripts=()
+
+    command mkdir -p -- "$SHRC_SCRIPTS_HOME" || return 1
+    manifest_new=$(command mktemp "$SHRC_SCRIPTS_HOME/.manifest.new.XXXXXX") || return 1
+
+    if ! command curl -fsSL -o "$manifest_new" -- "$SHRC_SCRIPTS_MANIFEST_URL"; then
+        command rm -f -- "$manifest_new"
+        echo "ish: failed to download script manifest" >&2
+        return 1
+    fi
+
+    while IFS= read -r script_name || [ -n "$script_name" ]; do
+        script_name="${script_name%$'\r'}"
+        case "$script_name" in
+            ""|\#*) continue ;;
+        esac
+
+        script_count=$((script_count + 1))
+        if ! _shrc_valid_script_name "$script_name"; then
+            echo "ish: invalid script name in manifest: $script_name" >&2
+            failed_scripts+=("$script_name")
+        elif ! _shrc_update_script "$script_name"; then
+            failed_scripts+=("$script_name")
+        fi
+    done < "$manifest_new"
+
+    command rm -f -- "$manifest_new"
+
+    if [ "$script_count" -eq 0 ]; then
+        echo "ish: script manifest contains no entries" >&2
+        return 1
+    fi
+
+    if [ ${#failed_scripts[@]} -ne 0 ]; then
+        echo "ish: failed scripts: ${failed_scripts[*]}" >&2
+        return 1
+    fi
+
+    return 0
 }
 
 _shrc_run_script()
 {
-    # TODO
-    if [ $# = 0 ]; then
-        echo "Usage: ush <script_name>"
-    else
-        command $SHRC_SCRIPTS_HOME/$1.sh
+    if [ $# -eq 0 ]; then
+        echo "Usage: rsh <script_name> [args...]" >&2
+        return 2
     fi
+
+    local script_name="$1"
+    local script_path=""
+    shift
+
+    if ! _shrc_valid_script_name "$script_name"; then
+        echo "rsh: invalid script name: $script_name" >&2
+        return 2
+    fi
+
+    script_path="$SHRC_SCRIPTS_HOME/$script_name.sh"
+    if [ ! -f "$script_path" ] || [ ! -r "$script_path" ]; then
+        echo "rsh: script is not installed: $script_name" >&2
+        echo "Run 'ish $script_name' first." >&2
+        return 1
+    fi
+
+    command bash "$script_path" "$@"
+}
+
+_shrc_usage()
+{
+    echo "Usage: shrc <command> [args...]"
+    echo "Commands:"
+    echo "  source                 Reload the current shell rc file"
+    echo "  update [-a]            Update .shrc; -a also updates all scripts"
+    echo "  edit                   Edit .shrc"
+    echo "  view                   View .shrc"
+    echo "  install <name>|-a      Install one or all scripts"
+    echo "  run <name> [args...]   Run an installed script with Bash"
+    echo "  clear                  Clear shell history"
 }
 
 shrc()
 {
-    if [ $# = 0 ]; then
-        echo "Usage: shrc <script_name>"
-        return
+    if [ $# -eq 0 ]; then
+        _shrc_usage >&2
+        return 2
     fi
-    if [ "$1" = update ]; then 
-        _shrc_update_shrc ${@:2}
-    elif [ "$1" = source ]; then
-        _shrc_source_shrc ${@:2}
-    elif [ "$1" = edit ]; then
-        _shrc_edit_shrc ${@:2}
-    elif [ "$1" = view ]; then
-        _shrc_view_shrc ${@:2}
-    elif [ "$1" = install ]; then
-        _shrc_update_script ${@:2}
-    elif [ "$1" = run ]; then
-        _shrc_update_script ${@:2}
-    elif [ "$1" = clear ]; then
-        _shrc_SHELL_clear_history ${@:2}
-    else
-        echo "Unknown command: $1"
-        echo "Usage: shrc <command> [<args>]"
-        echo "Available commands: source, update, edit, view, install, run, clear"
-    fi    
+
+    local shrc_command="$1"
+    shift
+
+    case "$shrc_command" in
+        update)
+            if [ $# -eq 0 ]; then
+                _shrc_update_shrc
+            elif [ $# -eq 1 ] && [ "$1" = "-a" ]; then
+                _shrc_update_shrc && _shrc_update_all_scripts
+            else
+                echo "Usage: urc [-a]" >&2
+                return 2
+            fi
+            ;;
+        source)
+            if [ $# -ne 0 ]; then
+                echo "Usage: src" >&2
+                return 2
+            fi
+            _shrc_source_shrc
+            ;;
+        edit)
+            if [ $# -ne 0 ]; then
+                echo "Usage: erc" >&2
+                return 2
+            fi
+            _shrc_edit_shrc
+            ;;
+        view)
+            if [ $# -ne 0 ]; then
+                echo "Usage: vrc" >&2
+                return 2
+            fi
+            _shrc_view_shrc
+            ;;
+        install)
+            if [ $# -eq 1 ] && [ "$1" = "-a" ]; then
+                _shrc_update_all_scripts
+            else
+                _shrc_update_script "$@"
+            fi
+            ;;
+        run)
+            _shrc_run_script "$@"
+            ;;
+        clear)
+            if [ $# -ne 0 ]; then
+                echo "Usage: csh" >&2
+                return 2
+            fi
+            _shrc_SHELL_clear_history
+            ;;
+        *)
+            echo "Unknown command: $shrc_command" >&2
+            _shrc_usage >&2
+            return 2
+            ;;
+    esac
 }
 
 

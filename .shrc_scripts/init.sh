@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# curl -fsSL https://gitee.com/kurayuri/shrc/raw/main/sh_scripts/init.sh | bash -s -- <DEVC_ID> --exec all --conda-type miniconda
+# curl -fsSL https://gitee.com/kurayuri/shrc/raw/main/.shrc_scripts/init.sh | bash -s -- <DEVC_ID> --exec all --conda-type miniconda
 
 # sudo adduser kurayuri
 # sudo visudo

@@ -1,0 +1,5 @@
+# One extensionless script name per line.
+init
+file_configs
+init_project
+tscp
