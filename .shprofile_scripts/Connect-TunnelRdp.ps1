@@ -17,6 +17,8 @@ trdp - RDP over an OpenSSH tunnel
 
 Usage:
   trdp <host>
+  trdp <host> -Tunnel
+  trdp <host> -Rdp
   trdp <host> -Credential <Set|Status|Remove> [-UserName <username>]
   trdp <host> -Config [-LocalAddress <127.0.A.B>] [-RdpHost <host>]
                       [-RdpPort <port>] [-MstscArgs <arg> ...]
@@ -26,6 +28,10 @@ The first use of an SSH host automatically assigns and stores a stable
 127.0.A.B address in ~/.config/trdp-config.json. Every tunnel uses local port
 33389. SSH connection details continue to come from the normal OpenSSH
 configuration.
+
+Use -Tunnel to open only the SSH tunnel and keep it running until interrupted.
+Use -Rdp to start only mstsc through an already-running tunnel. Without
+either option, trdp opens the tunnel and starts mstsc as before.
 '@ | Write-Host
 }
 
@@ -783,12 +789,6 @@ function Wait-TrdpTunnel {
 function Start-TrdpConnection {
     param([Parameter(Mandatory = $true)] $Settings)
 
-    if (-not (Test-TrdpCredential -Target $Settings.CredentialTarget)) {
-        Write-Host "No RDP credential is stored for $($Settings.ConfiguredHost) ($($Settings.CredentialTarget))."
-        $defaultUserName = Get-ResolvedSshUser -HostName $Settings.SshHost
-        Set-TrdpCredential -Target $Settings.CredentialTarget -UserName '' -DefaultUserName $defaultUserName
-    }
-
     Assert-LocalEndpointAvailable -Address $Settings.LocalAddress -Port $Settings.LocalPort
     $sshArguments = @(
         '-N',
@@ -805,15 +805,63 @@ function Start-TrdpConnection {
     try {
         $sshProcess = Start-Process -FilePath "$env:SystemRoot\System32\OpenSSH\ssh.exe" -ArgumentList $sshArguments -NoNewWindow -PassThru
         Wait-TrdpTunnel -SshProcess $sshProcess -Settings $Settings
-
-        $mstscArguments = New-Object System.Collections.Generic.List[string]
-        foreach ($argument in $Settings.MstscArgs) {
-            $mstscArguments.Add($argument)
+        Start-TrdpClient -Settings $Settings
+    }
+    finally {
+        if (($null -ne $sshProcess) -and (-not $sshProcess.HasExited)) {
+            Write-Host 'Closing SSH tunnel.'
+            Stop-Process -Id $sshProcess.Id -Force -ErrorAction SilentlyContinue
+            try { $sshProcess.WaitForExit(5000) | Out-Null } catch { }
         }
-        $mstscArguments.Add("/v:$($Settings.LocalAddress):$($Settings.LocalPort)")
+        if ($null -ne $sshProcess) {
+            $sshProcess.Dispose()
+        }
+    }
+}
 
-        $mstscProcess = Start-Process -FilePath "$env:SystemRoot\System32\mstsc.exe" -ArgumentList $mstscArguments.ToArray() -PassThru
-        $mstscProcess.WaitForExit()
+function Start-TrdpClient {
+    param([Parameter(Mandatory = $true)] $Settings)
+
+    if (-not (Test-TrdpCredential -Target $Settings.CredentialTarget)) {
+        Write-Host "No RDP credential is stored for $($Settings.ConfiguredHost) ($($Settings.CredentialTarget))."
+        $defaultUserName = Get-ResolvedSshUser -HostName $Settings.SshHost
+        Set-TrdpCredential -Target $Settings.CredentialTarget -UserName '' -DefaultUserName $defaultUserName
+    }
+
+    $mstscArguments = New-Object System.Collections.Generic.List[string]
+    foreach ($argument in $Settings.MstscArgs) {
+        $mstscArguments.Add($argument)
+    }
+    $mstscArguments.Add("/v:$($Settings.LocalAddress):$($Settings.LocalPort)")
+
+    $mstscProcess = Start-Process -FilePath "$env:SystemRoot\System32\mstsc.exe" -ArgumentList $mstscArguments.ToArray() -PassThru
+    $mstscProcess.WaitForExit()
+}
+
+function Start-TrdpForward {
+    param([Parameter(Mandatory = $true)] $Settings)
+
+    Assert-LocalEndpointAvailable -Address $Settings.LocalAddress -Port $Settings.LocalPort
+    $sshArguments = @(
+        '-N',
+        '-T',
+        '-o', 'ExitOnForwardFailure=yes',
+        '-L', (Format-SshForwardTarget -Settings $Settings),
+        $Settings.SshHost
+    )
+
+    Write-Host "Opening SSH tunnel: $($Settings.SshHost) -> $($Settings.RdpHost):$($Settings.RdpPort)"
+    Write-Host "Local RDP endpoint: $($Settings.LocalAddress):$($Settings.LocalPort)"
+    Write-Host 'Press Ctrl+C to close the SSH tunnel.'
+
+    $sshProcess = $null
+    try {
+        $sshProcess = Start-Process -FilePath "$env:SystemRoot\System32\OpenSSH\ssh.exe" -ArgumentList $sshArguments -NoNewWindow -PassThru
+        Wait-TrdpTunnel -SshProcess $sshProcess -Settings $Settings
+        $sshProcess.WaitForExit()
+        if ($sshProcess.ExitCode -ne 0) {
+            throw "ssh.exe exited with code $($sshProcess.ExitCode)."
+        }
     }
     finally {
         if (($null -ne $sshProcess) -and (-not $sshProcess.HasExited)) {
@@ -847,6 +895,8 @@ function ConvertFrom-TrdpArguments {
     $userName = ''
     $userNameSpecified = $false
     $configMode = $false
+    $tunnelOnly = $false
+    $rdpOnly = $false
     $updates = @{}
     $seenOptions = @{}
 
@@ -881,6 +931,14 @@ function ConvertFrom-TrdpArguments {
             '-config' {
                 $seenOptions[$optionKey] = $true
                 $configMode = $true
+            }
+            '-tunnel' {
+                $seenOptions[$optionKey] = $true
+                $tunnelOnly = $true
+            }
+            '-rdp' {
+                $seenOptions[$optionKey] = $true
+                $rdpOnly = $true
             }
             '-localaddress' {
                 $seenOptions[$optionKey] = $true
@@ -932,6 +990,13 @@ function ConvertFrom-TrdpArguments {
     if ((-not [string]::IsNullOrEmpty($credentialAction)) -and $configMode) {
         throw "Options '-Credential' and '-Config' cannot be used together."
     }
+    if ($tunnelOnly -and $rdpOnly) {
+        throw "Options '-Tunnel' and '-Rdp' cannot be used together."
+    }
+    if (($tunnelOnly -or $rdpOnly) -and
+        (($configMode) -or (-not [string]::IsNullOrEmpty($credentialAction)))) {
+        throw "Options '-Tunnel' and '-Rdp' cannot be combined with '-Credential' or '-Config'."
+    }
     if (($updates.Count -gt 0) -and (-not $configMode)) {
         throw "Configuration fields require the '-Config' option."
     }
@@ -944,6 +1009,12 @@ function ConvertFrom-TrdpArguments {
     }
     elseif ($configMode) {
         'Config'
+    }
+    elseif ($tunnelOnly) {
+        'Tunnel'
+    }
+    elseif ($rdpOnly) {
+        'Rdp'
     }
     else {
         'Connect'
@@ -969,6 +1040,21 @@ function Invoke-Trdp {
         'Connect' {
             $settings = Get-TrdpSettingsForHost -HostName $command.HostName -RegisterIfMissing
             Start-TrdpConnection -Settings $settings
+        }
+        'Tunnel' {
+            $settings = Get-TrdpSettingsForHost -HostName $command.HostName -RegisterIfMissing
+            Start-TrdpForward -Settings $settings
+        }
+        'Rdp' {
+            $settings = Get-TrdpSettingsForHost -HostName $command.HostName
+            if ($null -eq $settings) {
+                Write-UnregisteredHostMessage -HostName $command.HostName
+                return
+            }
+            if (-not (Test-LocalEndpointListening -Address $settings.LocalAddress -Port $settings.LocalPort)) {
+                throw "No tunnel is listening on $($settings.LocalAddress):$($settings.LocalPort). Run 'trdp $($command.HostName) -Tunnel' first."
+            }
+            Start-TrdpClient -Settings $settings
         }
         'Config' {
             if ($command.Updates.Count -gt 0) {
