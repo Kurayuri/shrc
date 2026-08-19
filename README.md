@@ -198,6 +198,11 @@ system-only service is sent to the system manager. If both scopes contain the
 name, the system manager wins and `svc` prints a notice. If neither contains
 the name, no action is run.
 
+In Bash and Zsh, press Tab after a service action such as `svc sa ` to complete
+installed system and user `*.service` unit names. Explicit user actions such as
+`svc pu ` only offer user-unit candidates. The completion definitions live in
+the separately installed `.shrc_scripts/svc_completion.sh` profile module.
+
 ## Profile manager
 
 | Command | Purpose |
@@ -270,6 +275,7 @@ Run the Unix test suites with Bash:
 ```sh
 bash tests/test_px.sh
 bash tests/test_svc.sh
+bash tests/test_svc_completion.sh
 ```
 
 Run the tunneled RDP test suite from the repository root:

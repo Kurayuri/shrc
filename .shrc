@@ -482,6 +482,16 @@ svc()
     shrc run svc "$@"
 }
 
+_shrc_load_svc_completion()
+{
+    local completion_path="$SHRC_SCRIPTS_HOME/svc_completion.sh"
+
+    [ -r "$completion_path" ] || return 0
+    . "$completion_path"
+}
+
+_shrc_load_svc_completion
+
 
 ################################################################
 # # find file by name precisely

@@ -4,4 +4,5 @@ file_configs
 init_project
 px
 svc
+svc_completion
 tscp

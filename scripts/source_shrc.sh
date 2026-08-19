@@ -23,6 +23,9 @@ fi
 _shrc_dev_root=$(CDPATH= builtin cd -P -- "$(command dirname -- "$_shrc_dev_loader")/.." >/dev/null && builtin pwd -P) || return 1
 . "$_shrc_dev_root/.shrc" || return 1
 SHRC_SCRIPTS_HOME="$_shrc_dev_root/.shrc_scripts"
+# > Load completion scripts
+_shrc_load_svc_completion || return 1
 
+# < Load completion scripts
 echo "Loaded development shrc: $_shrc_dev_root"
 unset _shrc_dev_loader _shrc_dev_root
