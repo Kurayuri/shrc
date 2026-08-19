@@ -17,12 +17,12 @@ rsh <tool> ...   run an installed tool
 
 - **One workflow on two platforms** — `src`, `urc`, `ish`, and `rsh` work in
   Bash/Zsh and PowerShell.
-- **Useful commands immediately** — inspect processes, scope a proxy to one
-  command, check listening ports, manage Conda/Docker, and search
+- **Useful commands immediately** — scope a proxy to one command, check
+  listening ports, manage Conda/Docker, and search
   files with short, memorable commands.
-- **Host-facing tools stay optional** — service management, `tscp`, SSH
-  forwarding, tunneled RDP, and Windows device cleanup live in independently
-  installed scripts.
+- **On-demand tools stay optional** — process inspection, service management,
+  `tscp`, SSH forwarding, tunneled RDP, and Windows device cleanup live in
+  independently installed scripts.
 - **Easy to audit** — the complete system is one sourced profile plus one flat
   script directory; there is no nested plugin framework.
 - **Safer updates** — downloads use temporary files, and main profiles are
@@ -85,6 +85,7 @@ ish Connect-TunnelRdp
 ### Find the process or port you care about
 
 ```sh
+ish px
 pxil python        # current user's active Python processes
 nsl 8080           # listening sockets containing 8080
 fx . TODO          # recursively find the word TODO
@@ -139,7 +140,6 @@ These commands are available as soon as `.shrc` is sourced:
 
 | Command | What it does | Example |
 | --- | --- | --- |
-| `px` | Filter processes by state, user, command, or full arguments. | `px -ui la python` |
 | `proxy` / `unproxy` | Set proxy variables globally or for one command. | `proxy -- curl example.com` |
 | `ns` | Filter TCP/UDP and listening sockets from `netstat`. | `ns -tl 8080` |
 | `ff` / `ffa` | Find exact or fuzzy filenames. | `ff . '*.log'` |
@@ -162,6 +162,7 @@ original CLI remains available. For example, `dk compose up` runs
 | `init` | Bootstrap packages, Conda, SSH, and shell settings on a Unix host. |
 | `file_configs` | Write the repository's tmux and pip configuration defaults. |
 | `init_project` | Create common project files such as `.gitignore`. |
+| `px` | Filter processes by state, user, command, or full arguments, with colored matches. |
 | `svc` | Auto-select the system or user manager for service actions and inspect journals. |
 | `tscp` | Push or pull directory trees through SSH using tar streams. |
 
@@ -181,8 +182,8 @@ ish -a           install or update every manifest tool
 rsh <name> ...   run one installed tool
 ```
 
-The dedicated `svc`, `tscp`, `sshl`, and `trdp` wrappers call the same installed
-scripts, so normal usage stays short.
+The dedicated `px`, `svc`, `tscp`, `sshl`, and `trdp` wrappers call the same
+installed scripts, so normal usage stays short.
 
 For `svc av`, `dv`, `sa`, `sp`, `rs`, `rl`, and `p`, put the service name
 immediately after the action. `svc` checks the installed system and user unit
@@ -258,9 +259,10 @@ Repository paths intentionally match their final paths under `$HOME`:
 
 ## Testing
 
-Run the Unix service-scope test suite with Bash:
+Run the Unix test suites with Bash:
 
 ```sh
+bash tests/test_px.sh
 bash tests/test_svc.sh
 ```
 
