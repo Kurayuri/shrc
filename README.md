@@ -185,6 +185,12 @@ rsh <name> ...   run one installed tool
 The dedicated `px`, `svc`, `tscp`, `sshl`, and `trdp` wrappers call the same
 installed scripts, so normal usage stays short.
 
+`pxl` and `pxr` match from the start of the program path's final component, as
+do their current-user variants `pxil` and `pxir`. For example, `python` matches
+both `python3` and `/usr/bin/python`. The variants ending in `a` continue to
+search the complete command line and arguments. Color highlighting follows the
+same scope, so basename modes do not color matching text in parent directories.
+
 For `svc av`, `dv`, `sa`, `sp`, `rs`, `rl`, and `p`, put the service name
 immediately after the action. `svc` checks the installed system and user unit
 files automatically. A user-only service is sent to `systemctl --user`; a

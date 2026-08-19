@@ -105,7 +105,9 @@ px()
         (user_regex != ".*" && $1 !~ user_regex) { next }
         ($8 ~ stat_regex) {
             if (scope == "col11") {
-                if ($11 ~ cmd_regex) {
+                program = $11
+                sub(/^.*\//, "", program)
+                if (program ~ cmd_regex) {
                     print
                 }
             } else {
@@ -136,10 +138,62 @@ px()
                 return $?
             fi
 
-            command grep --color=auto -E -e "$safe_search_pattern"
-            local grep_status=$?
-            [ "$grep_status" -eq 1 ] && return 0
-            return "$grep_status"
+            if [ ! -t 1 ]; then
+                command cat
+                return $?
+            fi
+
+            local row=""
+            local row_prefix=""
+            local program_path=""
+            local program_prefix=""
+            local program_basename=""
+            local row_suffix=""
+            local color_pattern=""
+            local color_target=""
+            local colored_target=""
+            local grep_status=0
+
+            while IFS= read -r row; do
+                if [[ ! "$row" =~ ^([[:space:]]*([^[:space:]]+[[:space:]]+){10})([^[:space:]]+)(.*)$ ]]; then
+                    command printf '%s\n' "$row"
+                    continue
+                fi
+
+                row_prefix="${BASH_REMATCH[1]}"
+                program_path="${BASH_REMATCH[3]}"
+                row_suffix="${BASH_REMATCH[4]}"
+
+                if [ "$search_scope" = "col11" ]; then
+                    case "$program_path" in
+                        */*)
+                            program_prefix="${program_path%/*}/"
+                            program_basename="${program_path##*/}"
+                            ;;
+                        *)
+                            program_prefix=""
+                            program_basename="$program_path"
+                            ;;
+                    esac
+                    color_pattern="$cmd_pattern"
+                    color_target="$program_basename"
+                else
+                    program_prefix=""
+                    color_pattern="$safe_search_pattern"
+                    color_target="${program_path}${row_suffix}"
+                    row_suffix=""
+                fi
+
+                colored_target=$(command printf '%s\n' "$color_target" \
+                    | command grep --color=always -E -e "$color_pattern")
+                grep_status=$?
+                if [ "$grep_status" -ne 0 ]; then
+                    return "$grep_status"
+                fi
+
+                command printf '%s%s%s%s\n' "$row_prefix" "$program_prefix" \
+                    "$colored_target" "$row_suffix"
+            done
         }
 }
 
