@@ -175,6 +175,8 @@ script is interrupted.
 
 ### Tests
 
+From the repository root:
+
 ```powershell
 Invoke-Pester .\tests\Connect-TunnelRdp.Tests.ps1
 ```

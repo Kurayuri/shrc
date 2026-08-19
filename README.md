@@ -18,10 +18,11 @@ rsh <tool> ...   run an installed tool
 - **One workflow on two platforms** — `src`, `urc`, `ish`, and `rsh` work in
   Bash/Zsh and PowerShell.
 - **Useful commands immediately** — inspect processes, scope a proxy to one
-  command, check listening ports, manage Conda/Docker/services, and search
+  command, check listening ports, manage Conda/Docker, and search
   files with short, memorable commands.
-- **Heavy tools stay optional** — `tscp`, SSH forwarding, tunneled RDP, and
-  Windows device cleanup live in independently installed scripts.
+- **Host-facing tools stay optional** — service management, `tscp`, SSH
+  forwarding, tunneled RDP, and Windows device cleanup live in independently
+  installed scripts.
 - **Easy to audit** — the complete system is one sourced profile plus one flat
   script directory; there is no nested plugin framework.
 - **Safer updates** — downloads use temporary files, and main profiles are
@@ -145,7 +146,6 @@ These commands are available as soon as `.shrc` is sourced:
 | `fx` / `fxa` | Search exact words or arbitrary text recursively. | `fxa src FIXME` |
 | `dk` | Short Docker subcommands for images, containers, exec, and contexts. | `dk xb dev` |
 | `cn` | Create, activate, list, and remove Conda environments. | `cn nn research` |
-| `svc` | Operate system and user services and inspect journals. | `svc pu worker.service` |
 | `tx` | Attach to tmux sessions or capture pane history. | `tx at research` |
 | `sudox` | Run a command through `sudo` with `.shrc` loaded. | `sudox svc p sshd` |
 
@@ -162,6 +162,7 @@ original CLI remains available. For example, `dk compose up` runs
 | `init` | Bootstrap packages, Conda, SSH, and shell settings on a Unix host. |
 | `file_configs` | Write the repository's tmux and pip configuration defaults. |
 | `init_project` | Create common project files such as `.gitignore`. |
+| `svc` | Auto-select the system or user manager for service actions and inspect journals. |
 | `tscp` | Push or pull directory trees through SSH using tar streams. |
 
 ### PowerShell
@@ -180,8 +181,15 @@ ish -a           install or update every manifest tool
 rsh <name> ...   run one installed tool
 ```
 
-The dedicated `tscp`, `sshl`, and `trdp` wrappers call the same installed
+The dedicated `svc`, `tscp`, `sshl`, and `trdp` wrappers call the same installed
 scripts, so normal usage stays short.
+
+For `svc av`, `dv`, `sa`, `sp`, `rs`, `rl`, and `p`, put the service name
+immediately after the action. `svc` checks the installed system and user unit
+files automatically. A user-only service is sent to `systemctl --user`; a
+system-only service is sent to the system manager. If both scopes contain the
+name, the system manager wins and `svc` prints a notice. If neither contains
+the name, no action is run.
 
 ## Profile manager
 
@@ -230,10 +238,12 @@ Repository paths intentionally match their final paths under `$HOME`:
 │   ├── manifest.txt
 │   └── *.sh
 ├── .shprofile.ps1
-└── .shprofile_scripts/
-    ├── manifest.txt
-    ├── *.ps1
-    └── tests/
+├── .shprofile_scripts/
+│   ├── manifest.txt
+│   └── *.ps1
+└── tests/
+    ├── test_svc.sh
+    └── Connect-TunnelRdp.Tests.ps1
 ```
 
 ## Safety
@@ -248,7 +258,13 @@ Repository paths intentionally match their final paths under `$HOME`:
 
 ## Testing
 
-Run the tunneled RDP test suite from `.shprofile_scripts`:
+Run the Unix service-scope test suite with Bash:
+
+```sh
+bash tests/test_svc.sh
+```
+
+Run the tunneled RDP test suite from the repository root:
 
 ```powershell
 Invoke-Pester .\tests\Connect-TunnelRdp.Tests.ps1

@@ -1,4 +1,6 @@
-$trdpScriptUnderTest = Join-Path (Split-Path $PSScriptRoot -Parent) 'Connect-TunnelRdp.ps1'
+$repositoryRoot = Split-Path $PSScriptRoot -Parent
+$shProfileScriptsRoot = Join-Path $repositoryRoot '.shprofile_scripts'
+$trdpScriptUnderTest = Join-Path $shProfileScriptsRoot 'Connect-TunnelRdp.ps1'
 . $trdpScriptUnderTest
 
 function New-TestConfiguration {

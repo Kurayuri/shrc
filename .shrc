@@ -648,46 +648,7 @@ sudox()
 # # service
 svc()
 {
-    _svc_list_i()
-    {
-        find ~/.config/systemd/user -maxdepth 1 -name '*.service' -printf '%f\n' | grep -e "${1:-}" 
-        # find ~/.config/systemd/user -maxdepth 1 -type f -printf '%f\n' | grep -e "${1:-}"
-        # find ~/.config/systemd/user -maxdepth 1 -type f -printf '%f\n' | grep -e "${1:-}" | sed 's/\.service$//'
-    }
-
-    if [ "$1" = av ]; then
-        command systemctl enable "${@:2}"
-    elif [ "$1" = dv ]; then
-        command systemctl disable "${@:2}"
-    elif [ "$1" = l ]; then
-        command systemctl list-units --no-pager --type=service --all "${@:2}"
-    elif [ "$1" = lu ]; then
-        command systemctl list-units --no-pager --type=service --all --user "${@:2}"
-    elif [ "$1" = li ]; then
-        _svc_list_i
-    elif [ "$1" = sa ]; then
-        command systemctl start "${@:2}"
-    elif [ "$1" = sp ]; then
-        command systemctl stop "${@:2}"
-    elif [ "$1" = rd ]; then
-        command systemctl daemon-reload "${@:2}"
-    elif [ "$1" = rs ]; then
-        command systemctl restart "${@:2}"
-    elif [ "$1" = rl ]; then
-        command systemctl reload "${@:2}"
-    elif [ "$1" = p ]; then
-        command systemctl status --no-pager "${@:2}"
-    elif [ "$1" = pu ]; then
-        command systemctl status --no-pager --user "${@:2}"
-    elif [ "$1" = pi ]; then
-        command systemctl status --no-pager --user $(_svc_list_i $2) "${@:3}"
-    elif [ "$1" = j ]; then
-        command journalctl --no-pager --unit "$2" --user-unit "$2" "${@:3}" 
-    elif [ "$1" = jx ]; then
-        command journalctl --no-pager --unit "*$2*" --user-unit "*$2*" "${@:3}"
-    else
-        command systemctl "$@"
-    fi
+    shrc run svc "$@"
 }
 
 
